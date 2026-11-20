@@ -10,7 +10,13 @@
 ![OpenCV](https://img.shields.io/badge/OpenCV-scikit--image-5C3EE8?logo=opencv&logoColor=white)
 ![Licence](https://img.shields.io/badge/licence-MIT-green)
 
-[**Essayer la démo en ligne**](https://minyurano.github.io/galerie-cbir/) · [Résultats](#résultats-sur-ghim-10k) · [Installation](#installation)
+<a href="https://minyurano.github.io/galerie-cbir/" title="Ouvrir l'application en ligne">
+  <img src="docs/bouton_demo.svg" alt="Cliquez ici pour accéder à l'application en ligne" width="620">
+</a>
+
+### 👉 [**CLIQUEZ ICI POUR ACCÉDER À L'APPLICATION EN LIGNE**](https://minyurano.github.io/galerie-cbir/)
+
+[Résultats](#résultats-sur-ghim-10k) · [Captures d'écran](#captures-décran) · [Installation](#installation) · [API REST](#api-rest)
 
 ![Retour de pertinence Re-weighting Type-1](docs/captures/retour_pertinence.jpg)
 
