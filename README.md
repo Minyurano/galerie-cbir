@@ -14,8 +14,6 @@
   <img src="docs/bouton_demo.svg" alt="Cliquez ici pour accéder à l'application en ligne" width="620">
 </a>
 
-### 👉 [**CLIQUEZ ICI POUR ACCÉDER À L'APPLICATION EN LIGNE**](https://minyurano.github.io/galerie-cbir/)
-
 [Résultats](#résultats-sur-ghim-10k) · [Captures d'écran](#captures-décran) · [Installation](#installation) · [API REST](#api-rest)
 
 ![Retour de pertinence Re-weighting Type-1](docs/captures/retour_pertinence.jpg)
