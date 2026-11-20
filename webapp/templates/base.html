@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Galerie CBIR{% endblock %} · Galerie CBIR</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
+  {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg app-nav">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('home') }}"><i class="bi bi-images"></i> Galerie <span>CBIR</span></a>
+    {% if current_user.is_authenticated %}
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link {% if request.blueprint == 'gallery' %}active{% endif %}" href="{{ url_for('gallery.index') }}"><i class="bi bi-grid-3x3-gap"></i> Galerie</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.blueprint == 'search' %}active{% endif %}" href="{{ url_for('search.form') }}"><i class="bi bi-search"></i> Recherche par le contenu</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.blueprint == 'share' %}active{% endif %}" href="{{ url_for('share.manage') }}"><i class="bi bi-share"></i> Mes partages</a></li>
+      </ul>
+      <span class="navbar-text me-3"><i class="bi bi-person-circle"></i> {{ current_user.username }}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    {% if current_user.is_authenticated and not hide_sidebar %}
+    <aside class="col-md-3 col-xl-2 sidebar py-3">
+      {% include "partials/sidebar.html" %}
+    </aside>
+    <main class="col-md-9 col-xl-10 py-3 px-md-4">
+    {% else %}
+    <main class="col-12 py-4">
+    {% endif %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat if cat != 'message' else 'info' }} alert-dismissible fade show py-2" role="alert">
+          {{ msg }}<button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1202 @@
+﻿[
+    {
+        "file":  "aircraft_0.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_1.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_2.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_3.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_4.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_5.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_6.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_7.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_8.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_9.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_10.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_11.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_12.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_13.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "aircraft_14.jpg",
+        "cls":  "aircraft"
+    },
+    {
+        "file":  "buildings_0.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_1.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_2.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_3.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_4.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_5.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_6.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_7.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_8.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_9.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_10.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_11.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_12.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_13.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "buildings_14.jpg",
+        "cls":  "buildings"
+    },
+    {
+        "file":  "butterfly_0.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_1.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_2.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_3.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_4.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_5.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_6.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_7.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_8.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_9.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_10.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_11.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_12.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_13.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "butterfly_14.jpg",
+        "cls":  "butterfly"
+    },
+    {
+        "file":  "cars_0.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_1.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_2.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_3.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_4.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_5.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_6.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_7.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_8.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_9.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_10.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_11.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_12.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_13.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "cars_14.jpg",
+        "cls":  "cars"
+    },
+    {
+        "file":  "dragon fly_0.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_1.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_2.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_3.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_4.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_5.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_6.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_7.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_8.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_9.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_10.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_11.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_12.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_13.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "dragon fly_14.jpg",
+        "cls":  "dragon fly"
+    },
+    {
+        "file":  "fireworks_0.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_1.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_2.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_3.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_4.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_5.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_6.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_7.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_8.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_9.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_10.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_11.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_12.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_13.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "fireworks_14.jpg",
+        "cls":  "fireworks"
+    },
+    {
+        "file":  "flowers_0.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_1.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_2.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_3.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_4.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_5.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_6.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_7.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_8.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_9.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_10.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_11.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_12.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_13.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "flowers_14.jpg",
+        "cls":  "flowers"
+    },
+    {
+        "file":  "hen_0.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_1.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_2.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_3.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_4.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_5.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_6.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_7.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_8.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_9.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_10.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_11.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_12.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_13.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "hen_14.jpg",
+        "cls":  "hen"
+    },
+    {
+        "file":  "horses_0.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_1.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_2.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_3.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_4.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_5.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_6.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_7.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_8.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_9.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_10.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_11.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_12.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_13.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "horses_14.jpg",
+        "cls":  "horses"
+    },
+    {
+        "file":  "insects_0.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_1.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_2.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_3.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_4.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_5.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_6.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_7.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_8.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_9.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_10.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_11.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_12.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_13.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "insects_14.jpg",
+        "cls":  "insects"
+    },
+    {
+        "file":  "motorcycles_0.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_1.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_2.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_3.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_4.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_5.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_6.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_7.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_8.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_9.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_10.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_11.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_12.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_13.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "motorcycles_14.jpg",
+        "cls":  "motorcycles"
+    },
+    {
+        "file":  "mountains_0.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_1.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_2.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_3.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_4.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_5.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_6.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_7.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_8.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_9.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_10.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_11.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_12.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_13.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "mountains_14.jpg",
+        "cls":  "mountains"
+    },
+    {
+        "file":  "sea shores_0.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_1.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_2.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_3.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_4.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_5.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_6.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_7.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_8.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_9.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_10.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_11.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_12.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_13.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "sea shores_14.jpg",
+        "cls":  "sea shores"
+    },
+    {
+        "file":  "ships_0.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_1.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_2.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_3.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_4.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_5.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_6.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_7.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_8.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_9.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_10.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_11.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_12.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_13.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "ships_14.jpg",
+        "cls":  "ships"
+    },
+    {
+        "file":  "sunset_0.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_1.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_2.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_3.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_4.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_5.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_6.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_7.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_8.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_9.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_10.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_11.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_12.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_13.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "sunset_14.jpg",
+        "cls":  "sunset"
+    },
+    {
+        "file":  "temples_0.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_1.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_2.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_3.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_4.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_5.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_6.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_7.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_8.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_9.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_10.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_11.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_12.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_13.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "temples_14.jpg",
+        "cls":  "temples"
+    },
+    {
+        "file":  "trees_0.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_1.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_2.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_3.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_4.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_5.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_6.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_7.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_8.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_9.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_10.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_11.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_12.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_13.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "trees_14.jpg",
+        "cls":  "trees"
+    },
+    {
+        "file":  "valleys_0.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_1.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_2.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_3.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_4.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_5.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_6.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_7.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_8.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_9.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_10.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_11.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_12.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_13.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "valleys_14.jpg",
+        "cls":  "valleys"
+    },
+    {
+        "file":  "walls_0.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_1.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_2.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_3.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_4.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_5.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_6.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_7.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_8.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_9.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_10.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_11.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_12.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_13.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "walls_14.jpg",
+        "cls":  "walls"
+    },
+    {
+        "file":  "yacht_0.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_1.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_2.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_3.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_4.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_5.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_6.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_7.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_8.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_9.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_10.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_11.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_12.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_13.jpg",
+        "cls":  "yacht"
+    },
+    {
+        "file":  "yacht_14.jpg",
+        "cls":  "yacht"
+    }
+]

@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galerie CBIR – Recherche d'images par le contenu</title>
+<style>
+:root{--bg:#f6f4ef;--ink:#1d1d1f;--mute:#62666b;--acc:#1f4e79;--acc2:#e8eef5;--line:#dcd6c8;--card:#fff;--ok:#2e7d32;--ko:#c62828;--c1:#1f4e79;--c2:#c0612b;--c3:#2e7d32}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif}
+a{color:var(--acc)}
+.hidden{display:none!important}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{filter:brightness(1.1)}
+.btn.light{background:var(--acc2);color:var(--acc)}
+.btn.red{background:#fbe9e9;color:var(--ko)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+label.btn input{display:none}
+input[type=text],input[type=password],input[type=number],select{border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:13px;background:#fff}
+.muted{color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:.95}
+
+/* ---- connexion ---- */
+#auth{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1f4e79,#3b6e9e)}
+#auth .box{background:#fff;border-radius:12px;padding:30px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#auth h1{color:var(--acc);font-size:24px;text-align:center}
+#auth p.sub{text-align:center;font-style:italic;color:var(--mute);margin-bottom:18px;font-family:Georgia,serif}
+#auth input{width:100%;margin-bottom:10px}
+#auth .btn{width:100%;justify-content:center;margin-top:4px}
+#auth .switch{text-align:center;margin-top:12px;font-size:13px}
+#auth .hint{background:var(--acc2);border-radius:6px;padding:8px;font-size:12.5px;margin-top:14px;text-align:center}
+#authMsg{color:var(--ko);font-size:12.5px;min-height:18px}
+
+/* ---- application ---- */
+header.top{background:var(--acc);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+header.top h1{font-size:19px}
+header.top nav{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+header.top nav button{background:none;border:none;color:#cfe0f1;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13.5px}
+header.top nav button.on{background:rgba(255,255,255,.18);color:#fff;font-weight:bold}
+header.top .user{font-size:13px}
+main{max-width:1250px;margin:auto;padding:18px}
+.status{color:var(--mute);font-size:13px;margin-bottom:10px;min-height:20px}
+
+/* galerie */
+.galwrap{display:grid;grid-template-columns:250px 1fr;gap:16px}
+@media(max-width:800px){.galwrap{grid-template-columns:1fr}}
+.tree{font-size:13px}
+.tree .node{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;border-radius:5px;cursor:pointer}
+.tree .node:hover{background:#f1eee6}
+.tree .node.on{background:var(--acc2);color:var(--acc);font-weight:bold}
+.tree .node .n{color:var(--mute);font-size:11.5px;font-weight:normal}
+.tree .kids{padding-left:14px}
+.catbar{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.thumb{position:relative;background:#fff;border:2px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer}
+.thumb.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc2)}
+.thumb img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.thumb .cap{font-size:11px;padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mute)}
+.thumb input{position:absolute;top:6px;left:6px;width:17px;height:17px;cursor:pointer}
+.empty{border:2px dashed var(--line);border-radius:10px;padding:40px;text-align:center;color:var(--mute)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;z-index:50;overflow:auto;padding:30px 10px}
+.modal .box{background:#fff;border-radius:12px;max-width:1000px;width:100%;padding:20px;position:relative}
+.modal .close{position:absolute;top:10px;right:14px;font-size:22px;background:none;border:none;cursor:pointer;color:var(--mute)}
+.mrow{display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media(max-width:800px){.mrow{grid-template-columns:1fr}}
+.mrow img,.mrow canvas{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.desc h4{font-size:13px;color:var(--acc);margin:10px 0 4px}
+.swatch{display:inline-flex;align-items:center;gap:6px;margin-right:12px;font-size:12px}
+.swatch i{display:inline-block;width:26px;height:26px;border-radius:5px;border:1px solid #0002}
+table.t{border-collapse:collapse;font-size:12.5px;width:100%}
+table.t th,table.t td{border:1px solid var(--line);padding:4px 7px;text-align:center}
+table.t th{background:#f3f0e8}
+
+/* recherche */
+.sgrid{display:grid;grid-template-columns:270px 1fr;gap:16px}
+@media(max-width:900px){.sgrid{grid-template-columns:1fr}}
+.qimg{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:3px solid var(--acc);background:#eee}
+.field{margin:8px 0}
+.field label{display:block;font-size:12px;color:var(--mute);margin-bottom:3px}
+.field select,.field input{width:100%}
+.w{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12.5px}
+.w span:first-child{width:135px}
+.bar{flex:1;background:#eef1f5;border-radius:4px;height:12px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .4s}
+.prec{background:#eef4ea;border-left:5px solid var(--ok);padding:9px 13px;border-radius:6px;margin:10px 0}
+.res{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:10px}
+.r{border:3px solid var(--line);border-radius:8px;overflow:hidden;background:#fafafa;font-size:11.5px}
+.r.pos{border-color:var(--ok)} .r.neg{border-color:var(--ko)}
+.r img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:pointer}
+.r .meta{padding:3px 6px;display:flex;justify-content:space-between;align-items:center}
+.r .cls{padding:0 6px 4px;color:var(--mute)}
+.r button{border:1px solid var(--line);background:#fff;border-radius:4px;padding:1px 7px;cursor:pointer}
+.r.pos .ok{background:var(--ok);color:#fff}
+.r.neg .ko{background:var(--ko);color:#fff}
+
+/* à propos */
+.about section{margin-bottom:28px}
+.about h2{color:var(--acc);border-bottom:2px solid var(--line);padding-bottom:5px;margin-bottom:10px;font-size:20px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
+.flow div{background:#fff;border:1px solid var(--acc);border-radius:6px;padding:9px 13px;text-align:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.cards ul,.about ol{padding-left:18px}
+pre{background:#1e1e1e;color:#e6e6e6;padding:14px;border-radius:8px;overflow-x:auto;font-size:12.5px}
+.formula{background:#fff;border:1px dashed var(--acc);padding:10px;text-align:center;font-style:italic;margin:10px 0;font-family:Georgia,serif}
+footer{text-align:center;padding:20px;color:var(--mute);font-size:12px;border-top:1px solid var(--line);margin-top:20px}
+</style>
+</head>
+<body>
+
+<!-- ======================= CONNEXION ======================= -->
+<div id="auth">
+  <div class="box">
+    <h1>Galerie de photos CBIR</h1>
+    <p class="sub">Recherche d'images par le contenu</p>
+    <div id="authTitle" style="font-weight:bold;margin-bottom:8px">Connexion</div>
+    <input id="aUser" type="text" placeholder="Nom d'utilisateur" autocomplete="username">
+    <input id="aPass" type="password" placeholder="Mot de passe" autocomplete="current-password">
+    <input id="aPass2" type="password" placeholder="Confirmer le mot de passe" class="hidden">
+    <div id="authMsg"></div>
+    <button class="btn" id="aGo">Se connecter</button>
+    <div class="switch"><a href="#" id="aSwitch">Créer un compte</a></div>
+    <div class="hint">Compte de démonstration : <b>demo</b> / <b>demo1234</b><br>(300 images GHIM-10K déjà importées)</div>
+  </div>
+</div>
+
+<!-- ======================= VUE PARTAGE ======================= -->
+<div id="shareView" class="hidden">
+  <header class="top"><h1>Galerie CBIR – album partagé</h1></header>
+  <main><div class="status" id="shareInfo"></div><div class="grid" id="shareGrid"></div></main>
+</div>
+
+<!-- ======================= APPLICATION ======================= -->
+<div id="app" class="hidden">
+<header class="top">
+  <h1>Galerie CBIR</h1>
+  <nav>
+    <button data-tab="galerie" class="on">🖼️ Galerie</button>
+    <button data-tab="recherche">🔍 Recherche</button>
+    <button data-tab="evaluation">📊 Évaluation</button>
+    <button data-tab="apropos">ℹ️ Le projet</button>
+  </nav>
+  <div class="user">👤 <b id="uName"></b> · <a href="#" id="logout" style="color:#cfe0f1">Déconnexion</a></div>
+</header>
+
+<main>
+<div class="status" id="status"></div>
+
+<!-- ---------- GALERIE ---------- -->
+<div id="tab-galerie">
+  <div class="galwrap">
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:8px">Catégories</h3>
+      <div class="tree" id="tree"></div>
+      <div class="catbar">
+        <button class="btn sm" id="cNew">＋ Nouvelle</button>
+        <button class="btn sm light" id="cSub">＋ Sous-catégorie</button>
+        <button class="btn sm light" id="cRen">Renommer</button>
+        <button class="btn sm light" id="cShare">Partager</button>
+        <button class="btn sm red" id="cDel">Supprimer</button>
+      </div>
+      <div style="margin-top:14px"><button class="btn sm light" id="importDemo">⬇ Importer GHIM-10K (démo)</button></div>
+    </div>
+    <div>
+      <div class="toolbar">
+        <label class="btn">📁 Ajouter des images<input id="upFiles" type="file" accept="image/*" multiple></label>
+        <button class="btn light" id="selAll">Tout sélectionner</button>
+        <span class="muted" id="selInfo"></span>
+        <select id="moveTo"><option value="">Déplacer vers…</option></select>
+        <button class="btn light" id="dlSel">⬇ Télécharger</button>
+        <button class="btn red" id="delSel">🗑 Supprimer</button>
+      </div>
+      <h3 id="catTitle" style="margin-bottom:10px;font-size:17px"></h3>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- RECHERCHE ---------- -->
+<div id="tab-recherche" class="hidden">
+  <div class="sgrid">
+    <div class="card">
+      <h3 style="font-size:15px">Image requête</h3>
+      <img class="qimg" id="qImg" alt="">
+      <div class="muted" id="qInfo" style="font-size:12px;margin:4px 0">Choisissez une image dans la galerie (bouton « Rechercher des images similaires ») ou chargez une image externe.</div>
+      <label class="btn light sm">📷 Image externe<input id="qFile" type="file" accept="image/*"></label>
+      <button class="btn light sm" id="qRand">🎲 Au hasard</button>
+      <div class="field"><label>Portée de la recherche</label><select id="scope"></select></div>
+      <div class="field"><label>Méthode de retour de pertinence</label>
+        <select id="method">
+          <option value="type1">Re-weighting Type-1</option>
+          <option value="qvm">Query Vector Modification (QVM)</option>
+          <option value="fre">Feature Relevance Estimation (FRE)</option>
+        </select></div>
+      <div class="field"><label>Nombre de résultats (K)</label><input id="kVal" type="number" min="4" max="60" value="12"></div>
+      <button class="btn" id="doSearch" style="width:100%;justify-content:center">🔍 Recherche simple</button>
+    </div>
+    <div>
+      <div class="card" id="rfPanel">
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:260px">
+            <h3 style="font-size:15px">Poids des descripteurs <span class="muted" id="iterLbl"></span></h3>
+            <div id="wbars"></div>
+          </div>
+          <div style="flex:1;min-width:240px">
+            <h3 style="font-size:15px">Retour de pertinence</h3>
+            <p class="muted" style="font-size:12.5px">Marquez les résultats ✓ (pertinent) / ✗ (non pertinent), ou utilisez le marquage automatique (même catégorie que la requête), puis lancez une itération.</p>
+            <div class="toolbar" style="margin-top:8px">
+              <button class="btn light sm" id="autoMark">✓ Marquer automatiquement</button>
+              <button class="btn sm" id="doFb">🔁 Itération</button>
+              <button class="btn light sm" id="resetQ">Réinitialiser</button>
+            </div>
+          </div>
+        </div>
+        <div class="prec hidden" id="prec"></div>
+      </div>
+      <h3 style="margin:14px 0 8px;font-size:16px">Résultats</h3>
+      <div class="res" id="res"><div class="empty">Aucune recherche pour l'instant.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- ÉVALUATION ---------- -->
+<div id="tab-evaluation" class="hidden">
+  <div class="card">
+    <h3 style="font-size:16px">Évaluation expérimentale (utilisateur simulé)</h3>
+    <p class="muted">Chaque image tirée au hasard sert de requête. Un utilisateur simulé marque les K premiers résultats (même catégorie = pertinent), avec un taux d'erreur réglable. On mesure la précision P@K de la recherche simple puis après chaque itération, pour les trois méthodes.</p>
+    <div class="toolbar" style="margin-top:10px">
+      <label>Requêtes <input id="eN" type="number" value="60" min="5" max="500" style="width:70px"></label>
+      <label>K <input id="eK" type="number" value="12" min="4" max="50" style="width:60px"></label>
+      <label>Itérations <input id="eIt" type="number" value="5" min="1" max="10" style="width:60px"></label>
+      <label>Erreurs utilisateur (%) <input id="eNoise" type="number" value="0" min="0" max="50" style="width:60px"></label>
+      <button class="btn" id="eRun">▶ Lancer l'évaluation</button>
+    </div>
+    <div class="status" id="eStatus"></div>
+    <div id="eOut"></div>
+  </div>
+</div>
+
+<!-- ---------- À PROPOS ---------- -->
+<div id="tab-apropos" class="hidden about">
+  <section><h2>Le projet</h2>
+    <p>Application Web de gestion d'une galerie de photos avec recherche d'images par le contenu (CBIR). Chaque image est décrite automatiquement par sa <b>couleur</b> et sa <b>texture</b> ; l'utilisateur recherche des images similaires à une image requête, puis affine les résultats par <b>retour de pertinence</b>.</p>
+    <p class="muted" style="margin-top:6px">Mini-projet du Master IASD (S3, 2026-2027), FST Tanger. Cette page est une version Web autonome (JavaScript) de l'application ; la version complète utilise Flask et une API Flask-RESTful.</p>
+  </section>
+  <section><h2>Architecture de l'application complète</h2>
+    <div class="flow">
+      <div><b>Navigateur</b><br>HTML / CSS / JS</div> &rarr;
+      <div><b>Application Web</b> (port 5000)<br>Flask, Flask-Login, SQLAlchemy</div> &rarr;
+      <div><b>API REST</b> (port 5001)<br>Flask-RESTful : descripteurs, recherche</div> &rarr;
+      <div><b>Données</b><br>SQLite + index des descripteurs</div>
+    </div>
+  </section>
+  <section><h2>Fonctionnalités</h2>
+    <div class="cards">
+      <div class="card"><b>Gestion</b><ul><li>Comptes utilisateurs</li><li>Catégories hiérarchiques</li><li>Ajout, suppression, déplacement, téléchargement (unitaire et groupé)</li><li>Création d'images par transformations</li><li>Partage par lien</li></ul></div>
+      <div class="card"><b>Descripteurs couleur</b><ul><li>Histogramme HSV (72 valeurs)</li><li>Moments de couleur (9)</li><li>Couleurs dominantes (12)</li></ul></div>
+      <div class="card"><b>Descripteurs texture</b><ul><li>GLCM / Haralick (4)</li><li>LBP (256)</li></ul></div>
+      <div class="card"><b>Recherche</b><ul><li>Recherche simple (distance pondérée normalisée)</li><li>Retour de pertinence : QVM, FRE, Re-weighting Type-1</li></ul></div>
+    </div>
+  </section>
+  <section><h2>Méthodes de retour de pertinence</h2>
+    <div class="formula">D(q, I) = &Sigma;<sub>i</sub> W<sub>i</sub> &middot; d<sub>i</sub>(q, I)</div>
+    <ol>
+      <li><b>QVM</b> (Rocchio) : la requête est déplacée vers les images pertinentes et éloignée des non pertinentes : q' = αq + β·moy(R) − γ·moy(N).</li>
+      <li><b>FRE</b> : le poids d'un descripteur est l'inverse de sa dispersion parmi les images pertinentes (W<sub>i</sub> ∝ 1/σ<sub>i</sub>).</li>
+      <li><b>Re-weighting Type-1</b> (méthode du groupe) : la requête devient la moyenne des images pertinentes ; chaque composante reçoit le poids W<sub>i</sub> = (ε + σ<sub>Nr,i</sub>) / (ε + σ<sub>rel,i</sub>) : fort si elle varie peu entre les images pertinentes mais beaucoup parmi les images retournées.</li>
+    </ol>
+  </section>
+  <section><h2>Résultats de l'application complète (GHIM-10K, 10 000 images)</h2>
+    <p>400 requêtes (20 par classe), 25 images affichées, utilisateur simulé sans erreur. Précision@25 : <b>50,4 %</b> en recherche simple, puis après 5 itérations <b>64,9 %</b> avec QVM, <b>69,6 %</b> avec FRE et <b>75,8 %</b> avec Re-weighting Type-1 (test de Wilcoxon : p &lt; 10<sup>-6</sup> face aux deux autres).</p>
+    <p class="muted" style="margin-top:6px">Cette page est une version simplifiée qui tourne entièrement dans le navigateur (descripteurs recalculés en JavaScript, un poids par descripteur). Les chiffres de l'onglet <i>Évaluation</i> sont recalculés en direct sur les images de la galerie et diffèrent donc de ceux de l'application complète.</p>
+  </section>
+  <section><h2>Installation de l'application complète</h2>
+<pre>git clone https://github.com/Minyurano/galerie-cbir.git
+cd galerie-cbir
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python run_api.py      # terminal 1 : API sur http://127.0.0.1:5001
+python run_web.py      # terminal 2 : application sur http://127.0.0.1:5000</pre>
+    <p class="muted" style="margin-top:6px">Code source : <a href="https://github.com/Minyurano/galerie-cbir">github.com/Minyurano/galerie-cbir</a></p>
+  </section>
+  <section><h2>Auteur</h2><p>MINYURANO Aloys</p></section>
+</div>
+</main>
+<footer>Master IASD – FST Tanger, Université Abdelmalek Essaâdi – 2026/2027 · MINYURANO Aloys</footer>
+</div>
+
+<!-- modal -->
+<div class="modal hidden" id="modal"><div class="box"><button class="close" id="mClose">×</button><div id="mBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   1. OUTILS ET STOCKAGE (localStorage + IndexedDB)
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep = () => new Promise(r => setTimeout(r));
+function toast(t){ const e=$("toast"); e.textContent=t; e.classList.add("show"); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove("show"),2600); }
+function status(t){ $("status").textContent=t||""; }
+const LS = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+let MEM = {};   // repli si IndexedDB est indisponible
+const DB = {
+  db:null,
+  async open(){
+    if(this.db) return this.db;
+    try{
+      this.db = await new Promise((ok,ko)=>{ const r=indexedDB.open("cbir",1);
+        r.onupgradeneeded=()=>r.result.createObjectStore("images",{keyPath:"id"});
+        r.onsuccess=()=>ok(r.result); r.onerror=()=>ko(r.error); });
+    }catch(e){ this.db=null; }
+    return this.db;
+  },
+  async tx(mode, fn){
+    const db=await this.open();
+    if(!db) return fn(null);
+    return new Promise((ok,ko)=>{ const t=db.transaction("images",mode); const st=t.objectStore("images"); const res=fn(st); t.oncomplete=()=>ok(res&&res.result!==undefined?res.result:res); t.onerror=()=>ko(t.error); });
+  },
+  async all(user){
+    const db=await this.open();
+    if(!db) return Object.values(MEM).filter(r=>r.user===user);
+    const rows=await new Promise((ok,ko)=>{ const r=db.transaction("images").objectStore("images").getAll(); r.onsuccess=()=>ok(r.result); r.onerror=()=>ko(r.error); });
+    return rows.filter(r=>r.user===user);
+  },
+  async put(rec){ const db=await this.open(); if(!db){ MEM[rec.id]=rec; return; } await this.tx("readwrite",st=>st.put(rec)); },
+  async del(id){ const db=await this.open(); if(!db){ delete MEM[id]; return; } await this.tx("readwrite",st=>st.delete(id)); }
+};
+async function hash(s){
+  try{ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("cbir:"+s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+  catch(e){ let h=0; for(const c of "cbir:"+s) h=(h*31+c.charCodeAt(0))|0; return "h"+h; }
+}
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+
+/* =====================================================================
+   2. DESCRIPTEURS (même logique que l'API Flask-RESTful)
+   ===================================================================== */
+const SIZE=128;
+const DESC=["Histogramme HSV","Moments de couleur","Couleurs dominantes","GLCM (Haralick)","LBP"];
+const HIST=[true,false,false,false,true];       // L1 pour les histogrammes, euclidienne sinon
+const cvs=document.createElement("canvas"); cvs.width=cvs.height=SIZE;
+const ctx=cvs.getContext("2d",{willReadFrequently:true});
+
+function rgb2hsv(r,g,b){
+  r/=255; g/=255; b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0;
+  if(d){ if(mx===r) h=((g-b)/d)%6; else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h/=6; if(h<0) h+=1; }
+  return [h, mx?d/mx:0, mx];
+}
+function extract(img){
+  ctx.drawImage(img,0,0,SIZE,SIZE);
+  const px=ctx.getImageData(0,0,SIZE,SIZE).data, N=SIZE*SIZE;
+  const hh=new Array(72).fill(0), rh=new Array(64).fill(0), H=new Float32Array(N), S=new Float32Array(N), V=new Float32Array(N), G=new Float32Array(N);
+  for(let i=0;i<N;i++){
+    const r=px[4*i],g=px[4*i+1],b=px[4*i+2], [h,s,v]=rgb2hsv(r,g,b);
+    H[i]=h; S[i]=s; V[i]=v;
+    hh[Math.min(7,Math.floor(h*8))*9+Math.min(2,Math.floor(s*3))*3+Math.min(2,Math.floor(v*3))]++;
+    rh[(r>>6)*16+(g>>6)*4+(b>>6)]++;
+    G[i]=0.299*r+0.587*g+0.114*b;
+  }
+  const f1=hh.map(x=>x/N);
+  const f2=[];
+  for(const c of [H,S,V]){ let m=0; for(const x of c) m+=x; m/=N; let v2=0,v3=0; for(const x of c){ v2+=(x-m)**2; v3+=(x-m)**3; } f2.push(m,Math.sqrt(v2/N),Math.cbrt(v3/N)); }
+  const top=[...rh.keys()].sort((a,b)=>rh[b]-rh[a]).slice(0,3), f3=[];
+  for(const k of top) f3.push(((k>>4)*64+32)/255,(((k>>2)&3)*64+32)/255,((k&3)*64+32)/255,rh[k]/N);
+  const L=16, P=new Float32Array(L*L); let tot=0; const q=new Uint8Array(N); for(let i=0;i<N;i++) q[i]=Math.min(L-1,G[i]>>4);
+  for(let y=0;y<SIZE-1;y++) for(let x=0;x<SIZE-1;x++){ const a=q[y*SIZE+x]; P[a*L+q[y*SIZE+x+1]]++; P[a*L+q[(y+1)*SIZE+x]]++; tot+=2; }
+  let con=0,ene=0,hom=0,ent=0;
+  for(let i=0;i<L;i++) for(let j=0;j<L;j++){ const p=P[i*L+j]/tot; if(!p) continue; con+=(i-j)**2*p; ene+=p*p; hom+=p/(1+Math.abs(i-j)); ent-=p*Math.log2(p); }
+  const f4=[con/225,ene,hom,ent/8];
+  const lbp=new Array(256).fill(0); let nl=0; const off=[-SIZE-1,-SIZE,-SIZE+1,1,SIZE+1,SIZE,SIZE-1,-1];
+  for(let y=1;y<SIZE-1;y++) for(let x=1;x<SIZE-1;x++){ const i=y*SIZE+x, c=G[i]; let code=0; for(let k=0;k<8;k++) if(G[i+off[k]]>=c) code|=1<<k; lbp[code]++; nl++; }
+  return [f1,f2,f3,f4,lbp.map(x=>x/nl)];
+}
+function d1(i,a,b){ let s=0; if(HIST[i]){ for(let k=0;k<a.length;k++) s+=Math.abs(a[k]-b[k]); return s/2; } for(let k=0;k<a.length;k++) s+=(a[k]-b[k])**2; return Math.sqrt(s); }
+
+/* distances d'une requête (vecteurs qf) vers une liste d'images, normalisation gaussienne par descripteur */
+function rawDist(qf, list){ return list.map(im=>DESC.map((_,i)=>d1(i,qf[i],im.f[i]))); }
+function normalize(R){
+  const n=R.length; if(!n) return R;
+  const out=R.map(r=>r.slice());
+  for(let i=0;i<DESC.length;i++){
+    let m=0; for(const r of R) m+=r[i]; m/=n; let s=0; for(const r of R) s+=(r[i]-m)**2; s=Math.sqrt(s/n)||1;
+    for(const r of out) r[i]=Math.min(1,Math.max(0,((r[i]-m)/(3*s)+1)/2));
+  }
+  return out;
+}
+const score=(d,w)=>d.reduce((a,x,i)=>a+w[i]*x,0);
+
+/* =====================================================================
+   3. RETOUR DE PERTINENCE : QVM, FRE, Re-weighting Type-1
+   ===================================================================== */
+const EQ=()=>DESC.map(()=>1/DESC.length);
+function rfQVM(qf, rel, non){            // Rocchio : α=1, β=0.75, γ=0.15
+  return qf.map((v,i)=>v.map((x,k)=>{
+    const mr=rel.length?rel.reduce((a,im)=>a+im.f[i][k],0)/rel.length:0;
+    const mn=non.length?non.reduce((a,im)=>a+im.f[i][k],0)/non.length:0;
+    let y=x+(rel.length?0.75*(mr-x):0)-(non.length?0.15*mn:0);
+    return HIST[i]?Math.max(0,y):y;
+  }));
+}
+function rfFRE(qf, rel, w){               // W_i ∝ 1/σ_i parmi les images pertinentes (requête incluse)
+  if(!rel.length) return w;
+  const set=[qf,...rel.map(im=>im.f)];
+  const nw=DESC.map((_,i)=>{ const dim=set[0][i].length; let sd=0;
+    for(let k=0;k<dim;k++){ let m=0; for(const f of set) m+=f[i][k]; m/=set.length; let v=0; for(const f of set) v+=(f[i][k]-m)**2; sd+=Math.sqrt(v/set.length); }
+    sd/=dim; const scale=set.reduce((a,f)=>a+f[i].reduce((s,x)=>s+Math.abs(x),0)/dim,0)/set.length||1;
+    return 1/(sd/scale+0.05); });
+  const s=nw.reduce((a,x)=>a+x,0); return nw.map(x=>x/s);
+}
+function rfType1(D, labels, K, w, qf){    // article : W_i = (ε+σ_Nr,i)/(ε+σ_rel,i) (éq. 5), importance des descripteurs (éq. 14)
+  const EPS=1e-4;
+  const top=[...D].sort((a,b)=>score(a.d,w)-score(b.d,w)).slice(0,K).map(o=>o.im.f);   // N_r images retournées
+  const rel=[qf,...D.filter(o=>labels[o.im.id]>0).map(o=>o.im.f)];                       // pertinentes (requête comprise)
+  const sd=(set,i,k)=>{ let m=0; for(const f of set) m+=f[i][k]; m/=set.length; let v=0; for(const f of set) v+=(f[i][k]-m)**2; return Math.sqrt(v/set.length); };
+  const W=DESC.map((_,i)=>{ const dim=qf[i].length; let s=0;
+    for(let k=0;k<dim;k++) s+=Math.min((EPS+sd(top,i,k))/(EPS+sd(rel,i,k)),1/EPS);
+    return Math.log1p(s/dim); });                                                          // log : atténue les écarts extrêmes
+  const S=W.reduce((a,x)=>a+x,0);
+  const f=qf.map((v,i)=>v.map((_,k)=>rel.reduce((a,g)=>a+g[i][k],0)/rel.length));        // requête = moyenne des pertinentes
+  return { w: S>0 ? W.map(x=>x/S) : w, f };
+}
+
+/* =====================================================================
+   4. ÉTAT DE L'APPLICATION
+   ===================================================================== */
+let USER=null, CATS=[], IMGS=[], CUR="all", SEL=new Set();
+const catName=id=>(CATS.find(c=>c.id===id)||{}).name||"—";
+const children=id=>CATS.filter(c=>c.parent===id);
+function descendants(id){ const out=[id]; for(const c of children(id)) out.push(...descendants(c.id)); return out; }
+function catPath(id){ const p=[]; let c=CATS.find(x=>x.id===id); while(c){ p.unshift(c.name); c=CATS.find(x=>x.id===c.parent); } return p.join(" / "); }
+const saveCats=()=>LS.set("cbir_cats_"+USER,CATS);
+const clsOf=im=>catName(im.cat);         // la catégorie (feuille) sert de vérité terrain
+
+async function loadImageRecord(rec){
+  const url=rec.src==="blob"?URL.createObjectURL(rec.blob):rec.url;
+  const img=new Image(); img.src=url;
+  try{ await img.decode(); }catch(e){ return null; }
+  return {id:rec.id, cat:rec.cat, name:rec.name, url, rec, w:img.naturalWidth, h:img.naturalHeight, f:extract(img)};
+}
+
+/* ---------- Comptes ---------- */
+let regMode=false;
+$("aSwitch").onclick=e=>{ e.preventDefault(); regMode=!regMode;
+  $("authTitle").textContent=regMode?"Créer un compte":"Connexion"; $("aGo").textContent=regMode?"Créer le compte":"Se connecter";
+  $("aSwitch").textContent=regMode?"J'ai déjà un compte":"Créer un compte"; $("aPass2").classList.toggle("hidden",!regMode); $("authMsg").textContent=""; };
+$("aGo").onclick=async()=>{
+  const u=$("aUser").value.trim().toLowerCase(), p=$("aPass").value, users=LS.get("cbir_users",{});
+  if(!u||!p){ $("authMsg").textContent="Remplissez tous les champs."; return; }
+  if(regMode){
+    if(!/^[a-z0-9_.-]{3,20}$/.test(u)){ $("authMsg").textContent="Nom : 3 à 20 caractères (lettres, chiffres, . _ -)."; return; }
+    if(p.length<6){ $("authMsg").textContent="Mot de passe : au moins 6 caractères."; return; }
+    if(p!==$("aPass2").value){ $("authMsg").textContent="Les mots de passe ne correspondent pas."; return; }
+    if(users[u]||u==="demo"){ $("authMsg").textContent="Ce nom est déjà utilisé."; return; }
+    users[u]=await hash(p); LS.set("cbir_users",users);
+  } else {
+    const ok = u==="demo" ? p==="demo1234" : users[u] && users[u]===await hash(p);
+    if(!ok){ $("authMsg").textContent="Identifiants incorrects."; return; }
+  }
+  try{ sessionStorage.setItem("cbir_user",u); }catch(e){}
+  start(u);
+};
+$("aPass").onkeydown=$("aPass2").onkeydown=e=>{ if(e.key==="Enter") $("aGo").click(); };
+$("logout").onclick=e=>{ e.preventDefault(); try{ sessionStorage.removeItem("cbir_user"); }catch(x){} location.hash=""; location.reload(); };
+
+async function start(u){
+  USER=u; $("auth").classList.add("hidden"); $("app").classList.remove("hidden"); $("uName").textContent=u;
+  CATS=LS.get("cbir_cats_"+u,[]);
+  const recs=await DB.all(u);
+  if(u==="demo" && !recs.length && !LS.get("cbir_demo_done",false)){ await importDemo(); LS.set("cbir_demo_done",true); }
+  else {
+    IMGS=[]; let n=0;
+    for(const r of recs){ const im=await loadImageRecord(r); if(im) IMGS.push(im); if(++n%25===0){ status(`Chargement de la galerie… ${n}/${recs.length}`); await sleep(); } }
+    status(`${IMGS.length} image(s) dans votre galerie.`);
+  }
+  renderAll();
+}
+
+/* ---------- Import de la démo GHIM-10K ---------- */
+async function importDemo(){
+  let list;
+  try{ list=await (await fetch("demo/images.json")).json(); }catch(e){ toast("Images de démonstration introuvables (dossier demo/)."); return; }
+  let root=CATS.find(c=>c.name==="GHIM-10K"&&!c.parent);
+  if(!root){ root={id:uid(),name:"GHIM-10K",parent:null}; CATS.push(root); }
+  let n=0;
+  for(const it of list){
+    const cls=String(it.cls);
+    let c=CATS.find(x=>x.parent===root.id&&x.name===cls);
+    if(!c){ c={id:uid(),name:cls,parent:root.id}; CATS.push(c); }
+    if(IMGS.some(im=>im.rec.url==="demo/"+it.file&&im.cat===c.id)) continue;
+    const rec={id:uid(),user:USER,cat:c.id,name:it.file,src:"url",url:"demo/"+it.file};
+    const im=await loadImageRecord(rec); if(!im) continue;
+    await DB.put(rec); IMGS.push(im);
+    if(++n%20===0){ status(`Import de GHIM-10K et calcul des descripteurs… ${n}/${list.length}`); await sleep(); }
+  }
+  saveCats(); status(`${n} images GHIM-10K importées (${CATS.filter(c=>c.parent===root.id).length} catégories).`);
+}
+$("importDemo").onclick=async()=>{ await importDemo(); renderAll(); };
+
+/* =====================================================================
+   5. INTERFACE : GALERIE
+   ===================================================================== */
+function renderAll(){ renderTree(); renderGrid(); renderSelects(); }
+function countIn(id){ const ids=new Set(descendants(id)); return IMGS.filter(im=>ids.has(im.cat)).length; }
+function renderTree(){
+  const node=(c)=>`<div class="node ${CUR===c.id?"on":""}" data-id="${c.id}"><span>📁 ${esc(c.name)}</span><span class="n">${countIn(c.id)}</span></div>`+
+    (children(c.id).length?`<div class="kids">${children(c.id).map(node).join("")}</div>`:"");
+  $("tree").innerHTML=`<div class="node ${CUR==="all"?"on":""}" data-id="all"><span>🗂️ Toutes les images</span><span class="n">${IMGS.length}</span></div>`+children(null).map(node).join("");
+  $("tree").querySelectorAll(".node").forEach(n=>n.onclick=()=>{ CUR=n.dataset.id; SEL.clear(); renderTree(); renderGrid(); });
+}
+function visible(){ if(CUR==="all") return IMGS; const ids=new Set(descendants(CUR)); return IMGS.filter(im=>ids.has(im.cat)); }
+function renderGrid(){
+  const list=visible();
+  $("catTitle").textContent=CUR==="all"?"Toutes les images":catPath(CUR);
+  $("selInfo").textContent=SEL.size?`${SEL.size} sélectionnée(s)`:"";
+  if(!list.length){ $("grid").innerHTML=`<div class="empty" style="grid-column:1/-1">Aucune image ici.<br>Ajoutez des images ou importez la démo GHIM-10K.</div>`; return; }
+  const MAX=400, shown=list.slice(0,MAX);
+  $("grid").innerHTML=shown.map(im=>`<div class="thumb ${SEL.has(im.id)?"sel":""}" data-id="${im.id}"><input type="checkbox" ${SEL.has(im.id)?"checked":""}><img loading="lazy" src="${im.url}" alt=""><div class="cap">${esc(catName(im.cat))} · ${esc(im.name)}</div></div>`).join("")+
+    (list.length>MAX?`<div class="muted" style="grid-column:1/-1">… ${list.length-MAX} autres images (choisissez une catégorie).</div>`:"");
+  $("grid").querySelectorAll(".thumb").forEach(t=>{
+    const id=t.dataset.id;
+    t.querySelector("input").onclick=e=>{ e.stopPropagation(); e.target.checked?SEL.add(id):SEL.delete(id); t.classList.toggle("sel",e.target.checked); $("selInfo").textContent=SEL.size?`${SEL.size} sélectionnée(s)`:""; };
+    t.querySelector("img").onclick=()=>openImage(id);
+  });
+}
+function renderSelects(){
+  const opts=CATS.map(c=>`<option value="${c.id}">${esc(catPath(c.id))}</option>`).join("");
+  $("moveTo").innerHTML=`<option value="">Déplacer vers…</option>`+opts;
+  const cur=$("scope").value;
+  $("scope").innerHTML=`<option value="all">Toute la galerie</option>`+opts;
+  if([...$("scope").options].some(o=>o.value===cur)) $("scope").value=cur;
+}
+
+/* catégories */
+function askName(def){ const n=prompt("Nom de la catégorie :",def||""); return n&&n.trim()?n.trim():null; }
+$("cNew").onclick=()=>{ const n=askName(); if(!n) return; const c={id:uid(),name:n,parent:null}; CATS.push(c); saveCats(); CUR=c.id; renderAll(); };
+$("cSub").onclick=()=>{ if(CUR==="all"){ toast("Choisissez d'abord une catégorie parente."); return; } const n=askName(); if(!n) return; const c={id:uid(),name:n,parent:CUR}; CATS.push(c); saveCats(); CUR=c.id; renderAll(); };
+$("cRen").onclick=()=>{ if(CUR==="all") return toast("Choisissez une catégorie."); const c=CATS.find(x=>x.id===CUR); const n=askName(c.name); if(!n) return; c.name=n; saveCats(); renderAll(); };
+$("cDel").onclick=async()=>{
+  if(CUR==="all") return toast("Choisissez une catégorie.");
+  const ids=new Set(descendants(CUR)), imgs=IMGS.filter(im=>ids.has(im.cat));
+  if(!confirm(`Supprimer « ${catPath(CUR)} », ses sous-catégories et ${imgs.length} image(s) ?`)) return;
+  for(const im of imgs) await DB.del(im.id);
+  IMGS=IMGS.filter(im=>!ids.has(im.cat)); CATS=CATS.filter(c=>!ids.has(c.id)); saveCats(); CUR="all"; renderAll(); toast("Catégorie supprimée.");
+};
+$("cShare").onclick=()=>{
+  if(CUR==="all") return toast("Choisissez la catégorie à partager.");
+  const ids=new Set(descendants(CUR)), imgs=IMGS.filter(im=>ids.has(im.cat));
+  const pub=imgs.filter(im=>im.rec.src==="url");
+  openModal(`<h3>Partager « ${esc(catPath(CUR))} »</h3>
+    <p class="muted" style="margin:8px 0">Le destinataire voit les images en lecture seule, sans compte. ${pub.length<imgs.length?`<br><b>${imgs.length-pub.length} image(s) ajoutée(s) depuis votre ordinateur restent privées</b> : elles ne sont stockées que dans ce navigateur.`:""}</p>
+    <div class="toolbar"><label><input type="checkbox" id="shDl" checked> Téléchargement autorisé</label>
+    <label>Validité <select id="shExp"><option value="1">1 jour</option><option value="7" selected>7 jours</option><option value="30">30 jours</option><option value="0">illimitée</option></select></label>
+    <button class="btn" id="shGo">Créer le lien</button></div>
+    <input type="text" id="shLink" style="width:100%;margin-top:8px" readonly placeholder="Le lien apparaîtra ici">`);
+  $("shGo").onclick=async()=>{
+    if(!pub.length) return toast("Aucune image partageable dans cette catégorie.");
+    const days=+$("shExp").value, data={t:catPath(CUR),dl:$("shDl").checked?1:0,exp:days?Date.now()+days*864e5:0,f:pub.map(im=>[im.rec.url.replace(/^demo\//,""),catName(im.cat)])};
+    const link=location.origin+location.pathname+"#share="+btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    $("shLink").value=link; $("shLink").select();
+    try{ await navigator.clipboard.writeText(link); toast("Lien copié dans le presse-papiers."); }catch(e){ toast("Lien créé : copiez-le."); }
+  };
+};
+
+/* ajout d'images */
+$("upFiles").onchange=async e=>{
+  const files=[...e.target.files].filter(f=>f.type.startsWith("image/")); e.target.value="";
+  if(!files.length) return;
+  let cat=CUR;
+  if(cat==="all"){ let c=CATS.find(x=>x.name==="Mes images"&&!x.parent); if(!c){ c={id:uid(),name:"Mes images",parent:null}; CATS.push(c); saveCats(); } cat=c.id; }
+  let n=0;
+  for(const f of files){
+    const rec={id:uid(),user:USER,cat,name:f.name,src:"blob",blob:f};
+    const im=await loadImageRecord(rec); if(!im) continue;
+    await DB.put(rec); IMGS.push(im);
+    if(++n%10===0){ status(`Ajout et calcul des descripteurs… ${n}/${files.length}`); await sleep(); }
+  }
+  status(`${n} image(s) ajoutée(s) dans « ${catPath(cat)} ».`); CUR=cat; renderAll();
+};
+
+/* opérations groupées */
+$("selAll").onclick=()=>{ const v=visible(); const all=v.every(im=>SEL.has(im.id)); v.forEach(im=>all?SEL.delete(im.id):SEL.add(im.id)); renderGrid(); };
+$("delSel").onclick=async()=>{ if(!SEL.size) return toast("Aucune image sélectionnée."); if(!confirm(`Supprimer ${SEL.size} image(s) ?`)) return;
+  for(const id of SEL) await DB.del(id); IMGS=IMGS.filter(im=>!SEL.has(im.id)); SEL.clear(); renderAll(); toast("Images supprimées."); };
+$("moveTo").onchange=async e=>{ const to=e.target.value; e.target.value=""; if(!to) return; if(!SEL.size) return toast("Aucune image sélectionnée.");
+  for(const im of IMGS) if(SEL.has(im.id)){ im.cat=to; im.rec.cat=to; await DB.put(im.rec); } toast(`${SEL.size} image(s) déplacée(s) vers « ${catPath(to)} ».`); SEL.clear(); renderAll(); };
+function download(im){ const a=document.createElement("a"); a.href=im.url; a.download=im.name; document.body.appendChild(a); a.click(); a.remove(); }
+$("dlSel").onclick=async()=>{ if(!SEL.size) return toast("Aucune image sélectionnée."); for(const im of IMGS) if(SEL.has(im.id)){ download(im); await new Promise(r=>setTimeout(r,250)); } };
+
+/* =====================================================================
+   6. FICHE IMAGE : descripteurs + transformations
+   ===================================================================== */
+function openModal(html){ $("mBody").innerHTML=html; $("modal").classList.remove("hidden"); }
+$("mClose").onclick=()=>$("modal").classList.add("hidden");
+$("modal").onclick=e=>{ if(e.target.id==="modal") $("modal").classList.add("hidden"); };
+function bars(vals,color,h=70){
+  const mx=Math.max(...vals)||1, w=100/vals.length;
+  return `<svg viewBox="0 0 100 ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;background:#fafafa;border:1px solid var(--line);border-radius:5px">`+
+    vals.map((v,i)=>`<rect x="${i*w}" y="${h-v/mx*h}" width="${Math.max(w*.85,.3)}" height="${v/mx*h}" fill="${typeof color==="function"?color(i):color}"/>`).join("")+`</svg>`;
+}
+const hsvColor=i=>{ const h=Math.floor(i/9)/8+1/16, s=(Math.floor(i/3)%3)/3+1/6, v=(i%3)/3+1/6; return `hsl(${h*360},${s*100}%,${v*55+15}%)`; };
+function openImage(id){
+  const im=IMGS.find(x=>x.id===id); if(!im) return;
+  const [f1,f2,f3,f4,f5]=im.f, nm=["H","S","V"];
+  openModal(`<h3 style="margin-bottom:10px">${esc(im.name)} <span class="muted" style="font-size:13px">· ${esc(catPath(im.cat))} · ${im.w}×${im.h}</span></h3>
+  <div class="mrow">
+    <div>
+      <canvas id="tCanvas"></canvas>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="btn sm" id="mSearch">🔍 Rechercher des images similaires</button>
+        <button class="btn sm light" id="mDl">⬇ Télécharger</button>
+        <button class="btn sm red" id="mDel">🗑 Supprimer</button>
+      </div>
+      <div class="card" style="padding:10px;margin-top:6px">
+        <b style="font-size:13px">Créer une nouvelle image par transformation</b>
+        <div class="toolbar" style="margin:8px 0 4px">
+          <select id="tOp">
+            <option value="rot90">Rotation 90°</option><option value="rot180">Rotation 180°</option>
+            <option value="flipH">Miroir horizontal</option><option value="flipV">Miroir vertical</option>
+            <option value="gray">Niveaux de gris</option><option value="crop">Recadrage centré (70 %)</option>
+            <option value="half">Redimensionner (50 %)</option><option value="bright">Luminosité +30 %</option>
+            <option value="contrast">Contraste +40 %</option><option value="blur">Flou</option><option value="sepia">Sépia</option>
+          </select>
+          <button class="btn sm light" id="tApply">Appliquer</button>
+          <button class="btn sm light" id="tUndo">Annuler</button>
+        </div>
+        <button class="btn sm" id="tSave" disabled>💾 Enregistrer comme nouvelle image</button>
+      </div>
+    </div>
+    <div class="desc">
+      <h4>1. Histogramme HSV (8 teintes × 3 saturations × 3 valeurs = 72)</h4>${bars(f1,hsvColor)}
+      <h4>2. Moments de couleur (9)</h4>
+      <table class="t"><tr><th></th><th>Moyenne</th><th>Écart-type</th><th>Asymétrie</th></tr>${nm.map((c,i)=>`<tr><th>${c}</th>${[0,1,2].map(j=>`<td>${f2[i*3+j].toFixed(3)}</td>`).join("")}</tr>`).join("")}</table>
+      <h4>3. Couleurs dominantes (3 × [R, G, B, proportion] = 12)</h4>
+      <div>${[0,1,2].map(k=>`<span class="swatch"><i style="background:rgb(${f3[k*4]*255},${f3[k*4+1]*255},${f3[k*4+2]*255})"></i>${(f3[k*4+3]*100).toFixed(1)} %</span>`).join("")}</div>
+      <h4>4. GLCM – caractéristiques de Haralick (4)</h4>
+      <table class="t"><tr><th>Contraste</th><th>Énergie</th><th>Homogénéité</th><th>Entropie</th></tr><tr>${f4.map(v=>`<td>${v.toFixed(3)}</td>`).join("")}</tr></table>
+      <h4>5. Histogramme LBP (256)</h4>${bars(f5,"#1f4e79",60)}
+      <p class="muted" style="font-size:12px;margin-top:8px">Vecteur global : 72 + 9 + 12 + 4 + 256 = 353 valeurs.</p>
+    </div>
+  </div>`);
+  const c=$("tCanvas"), cx=c.getContext("2d"), img=new Image(); let history=[], changed=false;
+  img.onload=()=>{ const s=Math.min(1,700/Math.max(img.width,img.height)); c.width=img.width*s; c.height=img.height*s; cx.drawImage(img,0,0,c.width,c.height); };
+  img.src=im.url;
+  $("tApply").onclick=()=>{
+    history.push(cx.getImageData(0,0,c.width,c.height));
+    const src=document.createElement("canvas"); src.width=c.width; src.height=c.height; src.getContext("2d").drawImage(c,0,0);
+    const op=$("tOp").value, W=c.width, H=c.height;
+    const filt={gray:"grayscale(1)",bright:"brightness(1.3)",contrast:"contrast(1.4)",blur:"blur(3px)",sepia:"sepia(1)"}[op];
+    if(op==="rot90"){ c.width=H; c.height=W; cx.save(); cx.translate(H,0); cx.rotate(Math.PI/2); cx.drawImage(src,0,0); cx.restore(); }
+    else if(op==="rot180"){ cx.save(); cx.translate(W,H); cx.rotate(Math.PI); cx.drawImage(src,0,0); cx.restore(); }
+    else if(op==="flipH"){ cx.save(); cx.translate(W,0); cx.scale(-1,1); cx.drawImage(src,0,0); cx.restore(); }
+    else if(op==="flipV"){ cx.save(); cx.translate(0,H); cx.scale(1,-1); cx.drawImage(src,0,0); cx.restore(); }
+    else if(op==="crop"){ const w=W*.7,h=H*.7; c.width=w; c.height=h; cx.drawImage(src,(W-w)/2,(H-h)/2,w,h,0,0,w,h); }
+    else if(op==="half"){ c.width=Math.max(1,W/2); c.height=Math.max(1,H/2); cx.drawImage(src,0,0,c.width,c.height); }
+    else { cx.save(); cx.filter=filt; cx.clearRect(0,0,W,H); cx.drawImage(src,0,0); cx.restore();
+      if(cx.filter===undefined||cx.filter==="none"){ /* repli manuel pour les navigateurs sans ctx.filter */
+        const d=cx.getImageData(0,0,W,H), p=d.data;
+        for(let i=0;i<p.length;i+=4){ let r=p[i],g=p[i+1],b=p[i+2];
+          if(op==="gray"||op==="sepia"){ const y=.299*r+.587*g+.114*b; r=g=b=y; if(op==="sepia"){ r=y*1.07+30; g=y*.95+10; b=y*.8; } }
+          if(op==="bright"){ r*=1.3; g*=1.3; b*=1.3; } if(op==="contrast"){ r=(r-128)*1.4+128; g=(g-128)*1.4+128; b=(b-128)*1.4+128; }
+          p[i]=r; p[i+1]=g; p[i+2]=b; }
+        cx.putImageData(d,0,0); } }
+    changed=true; $("tSave").disabled=false;
+  };
+  $("tUndo").onclick=()=>{ const d=history.pop(); if(!d) return; c.width=d.width; c.height=d.height; cx.putImageData(d,0,0); if(!history.length){ changed=false; $("tSave").disabled=true; } };
+  $("tSave").onclick=()=>{ if(!changed) return; c.toBlob(async blob=>{
+    const base=im.name.replace(/\.[^.]+$/,""), rec={id:uid(),user:USER,cat:im.cat,name:`${base}_${$("tOp").value}.png`,src:"blob",blob};
+    const ni=await loadImageRecord(rec); if(!ni) return; await DB.put(rec); IMGS.push(ni); renderAll(); toast(`Nouvelle image « ${rec.name} » enregistrée.`); openImage(ni.id); },"image/png"); };
+  $("mSearch").onclick=()=>{ $("modal").classList.add("hidden"); setQuery(im.f, im.url, `${im.name} (${catName(im.cat)})`, im.id, catName(im.cat)); showTab("recherche"); runSearch(); };
+  $("mDl").onclick=()=>download(im);
+  $("mDel").onclick=async()=>{ if(!confirm("Supprimer cette image ?")) return; await DB.del(im.id); IMGS=IMGS.filter(x=>x.id!==im.id); $("modal").classList.add("hidden"); renderAll(); };
+}
+
+/* =====================================================================
+   7. RECHERCHE + RETOUR DE PERTINENCE
+   ===================================================================== */
+let Q=null;   // {f0, f, id, cls, weights, labels, iter, hist, method, results}
+function setQuery(f,url,label,id,cls){
+  Q={f0:f,f:f.map(v=>v.slice()),id,cls,w:EQ(),labels:{},iter:0,hist:[]};
+  $("qImg").src=url; $("qInfo").textContent=label;
+}
+function candidates(){ const s=$("scope").value; let list=IMGS; if(s!=="all"){ const ids=new Set(descendants(s)); list=IMGS.filter(im=>ids.has(im.cat)); } return list.filter(im=>im.id!==Q.id); }
+const getK=()=>Math.max(1,Math.min(60,+$("kVal").value||12));
+function ranked(){ const list=candidates(); const N=normalize(rawDist(Q.f,list)); return list.map((im,i)=>({im,d:N[i]})).map(o=>({...o,s:score(o.d,Q.w)})).sort((a,b)=>a.s-b.s); }
+function runSearch(){
+  if(!Q) return toast("Choisissez d'abord une image requête.");
+  const R=ranked(), K=getK(), top=R.slice(0,K);
+  Q.results=top;
+  if(Q.cls){ const ok=top.filter(o=>clsOf(o.im)===Q.cls).length; Q.hist[Q.iter]=Math.round(100*ok/Math.max(1,top.length));
+    $("prec").classList.remove("hidden");
+    $("prec").innerHTML=`<b>Précision P@${top.length} : ${ok} / ${top.length}</b> images de la catégorie « ${esc(Q.cls)} » — `+Q.hist.map((p,i)=>p===undefined?"":`${i?"itération "+i:"recherche simple"} : <b>${p} %</b>`).filter(Boolean).join(" → ");
+  } else $("prec").classList.add("hidden");
+  $("iterLbl").textContent=Q.iter?`(itération ${Q.iter} – ${$("method").selectedOptions[0].text})`:"(poids initiaux)";
+  $("wbars").innerHTML=DESC.map((n,i)=>`<div class="w"><span>${n}</span><div class="bar"><i style="width:${(Q.w[i]*100).toFixed(1)}%"></i></div><span>${(Q.w[i]*100).toFixed(0)} %</span></div>`).join("");
+  $("res").innerHTML=top.length?"":`<div class="empty">Aucune image candidate dans cette portée.</div>`;
+  top.forEach((o,k)=>{ const lab=Q.labels[o.im.id]||0, d=document.createElement("div");
+    d.className="r"+(lab>0?" pos":lab<0?" neg":"");
+    d.innerHTML=`<img src="${o.im.url}" alt="" title="Voir la fiche"><div class="meta"><span>#${k+1} · ${o.s.toFixed(3)}</span><span><button class="ok">✓</button> <button class="ko">✗</button></span></div><div class="cls">${esc(clsOf(o.im))}</div>`;
+    d.querySelector(".ok").onclick=()=>{ Q.labels[o.im.id]=lab>0?0:1; runSearchKeep(); };
+    d.querySelector(".ko").onclick=()=>{ Q.labels[o.im.id]=lab<0?0:-1; runSearchKeep(); };
+    d.querySelector("img").onclick=()=>openImage(o.im.id);
+    $("res").appendChild(d); });
+}
+function runSearchKeep(){ const h=Q.hist.slice(); runSearch(); Q.hist=h; refreshPrecOnly(); }
+function refreshPrecOnly(){ if(!Q.cls) return; const top=Q.results, ok=top.filter(o=>clsOf(o.im)===Q.cls).length;
+  $("prec").innerHTML=`<b>Précision P@${top.length} : ${ok} / ${top.length}</b> images de la catégorie « ${esc(Q.cls)} » — `+Q.hist.map((p,i)=>p===undefined?"":`${i?"itération "+i:"recherche simple"} : <b>${p} %</b>`).filter(Boolean).join(" → "); }
+function feedback(){
+  if(!Q||!Q.results) return toast("Lancez d'abord une recherche.");
+  if(!Object.values(Q.labels).some(v=>v)) return toast("Marquez au moins une image ✓ ou ✗.");
+  const all=candidates(), rel=all.filter(im=>Q.labels[im.id]>0), non=all.filter(im=>Q.labels[im.id]<0), m=$("method").value;
+  if(m==="qvm") Q.f=rfQVM(Q.f,rel,non);
+  else if(m==="fre") Q.w=rfFRE(Q.f0,rel,Q.w);
+  else { const N=normalize(rawDist(Q.f,all)); const r=rfType1(all.map((im,i)=>({im,d:N[i]})),Q.labels,getK(),Q.w,Q.f0); Q.w=r.w; Q.f=r.f; }
+  Q.iter++; runSearch(); toast(`Itération ${Q.iter} effectuée (${$("method").selectedOptions[0].text}).`);
+}
+$("doSearch").onclick=()=>{ if(!Q) return toast("Choisissez d'abord une image requête."); setQuery(Q.f0,$("qImg").src,$("qInfo").textContent,Q.id,Q.cls); runSearch(); };
+$("resetQ").onclick=$("doSearch").onclick;
+$("doFb").onclick=feedback;
+$("autoMark").onclick=()=>{ if(!Q||!Q.results) return toast("Lancez d'abord une recherche."); if(!Q.cls) return toast("Catégorie de la requête inconnue : marquez à la main.");
+  Q.results.forEach(o=>Q.labels[o.im.id]=clsOf(o.im)===Q.cls?1:-1); runSearchKeep(); toast("Résultats marqués. Lancez une itération."); };
+$("method").onchange=()=>{ if(Q){ setQuery(Q.f0,$("qImg").src,$("qInfo").textContent,Q.id,Q.cls); runSearch(); } };
+$("scope").onchange=()=>{ if(Q) $("doSearch").click(); };
+$("qRand").onclick=()=>{ if(!IMGS.length) return toast("La galerie est vide."); const im=IMGS[Math.floor(Math.random()*IMGS.length)]; setQuery(im.f,im.url,`${im.name} (${catName(im.cat)})`,im.id,catName(im.cat)); runSearch(); };
+$("qFile").onchange=async e=>{ const f=e.target.files[0]; e.target.value=""; if(!f) return; const url=URL.createObjectURL(f), img=new Image(); img.src=url;
+  try{ await img.decode(); }catch(x){ return toast("Image illisible."); }
+  setQuery(extract(img),url,`${f.name} (image externe)`,null,null); runSearch(); };
+
+/* =====================================================================
+   8. ÉVALUATION AUTOMATIQUE
+   ===================================================================== */
+$("eRun").onclick=async()=>{
+  const pool=IMGS.slice(); if(pool.length<20) return toast("Il faut au moins 20 images (importez la démo GHIM-10K).");
+  const nQ=Math.min(+$("eN").value||60,pool.length), K=+$("eK").value||12, IT=+$("eIt").value||5, noise=(+$("eNoise").value||0)/100;
+  $("eRun").disabled=true; $("eOut").innerHTML="";
+  const queries=[...pool].sort(()=>Math.random()-.5).slice(0,nQ), methods=["type1","qvm","fre"];
+  const sum={type1:new Array(IT+1).fill(0),qvm:new Array(IT+1).fill(0),fre:new Array(IT+1).fill(0)};
+  const t0=performance.now();
+  for(let qi=0;qi<queries.length;qi++){
+    const q=queries[qi], cls=clsOf(q), all=pool.filter(im=>im.id!==q.id);
+    const user=im=>{ let v=clsOf(im)===cls?1:-1; if(Math.random()<noise) v=-v; return v; };
+    for(const m of methods){
+      let f=q.f.map(v=>v.slice()), w=EQ(), labels={};
+      for(let it=0;it<=IT;it++){
+        const N=normalize(rawDist(f,all)), D=all.map((im,i)=>({im,d:N[i],s:score(N[i],w)})).sort((a,b)=>a.s-b.s), top=D.slice(0,K);
+        sum[m][it]+=top.filter(o=>clsOf(o.im)===cls).length/K;
+        if(it===IT) break;
+        top.forEach(o=>{ if(labels[o.im.id]===undefined) labels[o.im.id]=user(o.im); });
+        const rel=all.filter(im=>labels[im.id]>0), non=all.filter(im=>labels[im.id]<0);
+        if(m==="qvm") f=rfQVM(f,rel,non); else if(m==="fre") w=rfFRE(q.f,rel,w); else { const r=rfType1(D,labels,K,w,q.f); w=r.w; f=r.f; }
+      }
+    }
+    if(qi%3===0){ $("eStatus").textContent=`Évaluation… ${qi+1}/${queries.length} requêtes`; await sleep(); }
+  }
+  const P={}; for(const m of methods) P[m]=sum[m].map(x=>100*x/queries.length);
+  $("eStatus").textContent=`Terminé : ${queries.length} requêtes, ${pool.length} images, ${new Set(pool.map(clsOf)).size} catégories, ${((performance.now()-t0)/1000).toFixed(1)} s.`;
+  const names={type1:"Re-weighting Type-1",qvm:"QVM",fre:"FRE"}, col={type1:"#1f4e79",qvm:"#c0612b",fre:"#2e7d32"};
+  const W=640,H=260,pl=40,pb=30,pt=10, mx=Math.min(100,Math.ceil(Math.max(...methods.flatMap(m=>P[m]))/10)*10+10), mn=Math.max(0,Math.floor(Math.min(...methods.flatMap(m=>P[m]))/10)*10-10);
+  const X=i=>pl+i*(W-pl-20)/IT, Y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:720px;background:#fff;border:1px solid var(--line);border-radius:8px">`;
+  for(let v=mn;v<=mx;v+=10) svg+=`<line x1="${pl}" x2="${W-20}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eee"/><text x="${pl-6}" y="${Y(v)+4}" font-size="10" text-anchor="end" fill="#666">${v}%</text>`;
+  for(let i=0;i<=IT;i++) svg+=`<text x="${X(i)}" y="${H-10}" font-size="10" text-anchor="middle" fill="#666">${i?"it. "+i:"simple"}</text>`;
+  methods.forEach((m,j)=>{ svg+=`<polyline fill="none" stroke="${col[m]}" stroke-width="2.5" points="${P[m].map((v,i)=>X(i)+","+Y(v)).join(" ")}"/>`+P[m].map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="${col[m]}"><title>${names[m]} – ${v.toFixed(1)} %</title></circle>`).join("")+
+    `<rect x="${pl+10+j*150}" y="${pt+4}" width="12" height="12" fill="${col[m]}"/><text x="${pl+27+j*150}" y="${pt+14}" font-size="11">${names[m]}</text>`; });
+  svg+="</svg>";
+  $("eOut").innerHTML=`<h4 style="margin:10px 0 6px">Précision moyenne P@${K} (%)</h4>
+    <table class="t" style="max-width:720px"><tr><th>Méthode</th>${P.type1.map((_,i)=>`<th>${i?"Itération "+i:"Recherche simple"}</th>`).join("")}<th>Gain</th></tr>
+    ${methods.map(m=>`<tr><th>${names[m]}</th>${P[m].map(v=>`<td>${v.toFixed(1)}</td>`).join("")}<td><b>${(P[m][IT]-P[m][0]>=0?"+":"")+(P[m][IT]-P[m][0]).toFixed(1)}</b></td></tr>`).join("")}</table>
+    <div style="margin-top:12px">${svg}</div>`;
+  $("eRun").disabled=false;
+};
+
+/* =====================================================================
+   9. NAVIGATION, PARTAGE ET DÉMARRAGE
+   ===================================================================== */
+function showTab(t){ document.querySelectorAll("header.top nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+  ["galerie","recherche","evaluation","apropos"].forEach(x=>$("tab-"+x).classList.toggle("hidden",x!==t)); }
+document.querySelectorAll("header.top nav button").forEach(b=>b.onclick=()=>{ showTab(b.dataset.tab); if(b.dataset.tab==="recherche"&&!Q&&IMGS.length) $("qRand").click(); });
+
+function showShare(code){
+  $("auth").classList.add("hidden"); $("shareView").classList.remove("hidden");
+  let d; try{ d=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ $("shareInfo").textContent="Lien de partage invalide."; return; }
+  if(d.exp&&Date.now()>d.exp){ $("shareInfo").textContent="Ce lien de partage a expiré."; return; }
+  $("shareInfo").innerHTML=`Album « <b>${esc(d.t)}</b> » – ${d.f.length} image(s), lecture seule${d.exp?` · valable jusqu'au ${new Date(d.exp).toLocaleDateString("fr-FR")}`:""}${d.dl?"":" · téléchargement désactivé"}.`;
+  $("shareGrid").innerHTML=d.f.map(([f,c])=>`<div class="thumb"><img loading="lazy" src="demo/${esc(f)}" alt="" ${d.dl?"":'oncontextmenu="return false"'}><div class="cap">${esc(c)}${d.dl?` · <a href="demo/${esc(f)}" download>télécharger</a>`:""}</div></div>`).join("");
+}
+
+(function boot(){
+  const m=location.hash.match(/^#share=(.+)$/);
+  if(m) return showShare(m[1]);
+  let u=null; try{ u=sessionStorage.getItem("cbir_user"); }catch(e){}
+  if(u) start(u);
+})();
+</script>
+</body>
+</html>

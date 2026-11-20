@@ -1,0 +1,50 @@
+{# Arborescence des catégories (macro récursive) #}
+{% macro node(n, depth) %}
+  {% set active = cat is defined and cat and cat.id == n.cat.id %}
+  <li>
+    <div class="tree-item {% if active %}active{% endif %}" style="padding-left: {{ depth * 14 + 6 }}px">
+      {% if n.children %}
+      <button class="tree-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#c{{ n.cat.id }}" aria-expanded="true"><i class="bi bi-chevron-down"></i></button>
+      {% else %}<span class="tree-spacer"></span>{% endif %}
+      <a href="{{ url_for('gallery.index', cat=n.cat.id) }}" title="{{ n.cat.name }}">
+        <i class="bi {% if active %}bi-folder2-open{% else %}bi-folder2{% endif %}"></i> {{ n.cat.name }}
+      </a>
+      <span class="badge rounded-pill">{{ n.total }}</span>
+    </div>
+    {% if n.children %}
+    <ul class="collapse show list-unstyled mb-0" id="c{{ n.cat.id }}">
+      {% for ch in n.children %}{{ node(ch, depth + 1) }}{% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+{% endmacro %}
+
+<div class="d-flex align-items-center justify-content-between mb-2">
+  <h6 class="text-uppercase small fw-bold text-muted mb-0">Catégories</h6>
+  <button class="btn btn-sm btn-link p-0" data-bs-toggle="modal" data-bs-target="#newCatModal" title="Nouvelle catégorie"><i class="bi bi-folder-plus fs-5"></i></button>
+</div>
+<ul class="list-unstyled tree mb-3">
+  <li>
+    <div class="tree-item {% if request.endpoint == 'gallery.index' and not cat %}active{% endif %}" style="padding-left:6px">
+      <span class="tree-spacer"></span>
+      <a href="{{ url_for('gallery.index') }}"><i class="bi bi-house"></i> Racine (non classées)</a>
+      <span class="badge rounded-pill">{{ uncategorized_count }}</span>
+    </div>
+  </li>
+  {% for n in category_tree %}{{ node(n, 0) }}{% endfor %}
+</ul>
+
+<div class="modal fade" id="newCatModal" tabindex="-1">
+  <div class="modal-dialog modal-sm"><div class="modal-content">
+    <form method="post" action="{{ url_for('gallery.category_create') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="parent_id" value="{{ cat.id if cat is defined and cat else '' }}">
+      <div class="modal-header"><h6 class="modal-title">Nouvelle catégorie</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">Dans : <strong>{{ (cat.path()|map(attribute='name')|join(' / ')) if cat is defined and cat else 'Racine' }}</strong></p>
+        <input class="form-control" name="name" maxlength="120" required placeholder="Nom de la catégorie" autofocus>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary btn-sm">Créer</button></div>
+    </form>
+  </div></div>
+</div>

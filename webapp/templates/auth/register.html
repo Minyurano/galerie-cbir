@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Créer un compte{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card card shadow-sm">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        <div class="auth-logo"><i class="bi bi-person-plus"></i></div>
+        <h1 class="h4 mb-1">Créer un compte</h1>
+      </div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3"><label class="form-label">Nom d'utilisateur</label>
+          <input class="form-control" name="username" value="{{ username or '' }}" required pattern="[A-Za-z0-9_.\-]{3,32}"></div>
+        <div class="mb-3"><label class="form-label">E-mail</label>
+          <input class="form-control" type="email" name="email" value="{{ email or '' }}" required></div>
+        <div class="mb-3"><label class="form-label">Mot de passe <span class="text-muted small">(8 caractères minimum)</span></label>
+          <input class="form-control" type="password" name="password" minlength="8" required></div>
+        <div class="mb-3"><label class="form-label">Confirmation</label>
+          <input class="form-control" type="password" name="password2" minlength="8" required></div>
+        <button class="btn btn-primary w-100">Créer le compte</button>
+      </form>
+      <p class="text-center small mt-3 mb-0">Déjà inscrit ? <a href="{{ url_for('auth.login') }}">Se connecter</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Résultats de recherche{% endblock %}
+{% block content %}
+{% set judged = state.judged or {} %}
+<div class="row g-3 mb-3">
+  {# ---------- Requête ---------- #}
+  <div class="col-md-4 col-xl-3">
+    <div class="card h-100 query-card"><div class="card-body text-center">
+      <div class="small text-uppercase fw-bold text-muted mb-2">Image requête</div>
+      {% if query_img %}
+        <a href="{{ url_for('gallery.detail', image_id=query_img.id) }}"><img class="img-fluid rounded" src="{{ url_for('gallery.thumb', image_id=query_img.id) }}"></a>
+        <div class="small mt-2 text-break">{{ query_img.original_name }}</div>
+        {% if state.query_label is not none %}<span class="badge bg-secondary">Classe GHIM-10K {{ state.query_label }}</span>{% endif %}
+      {% else %}
+        <img class="img-fluid rounded" src="{{ url_for('search.query_file', token=state.query_file) }}">
+        <div class="small mt-2 text-muted">Image externe (non ajoutée à la galerie)</div>
+      {% endif %}
+    </div></div>
+  </div>
+
+  {# ---------- État de la session ---------- #}
+  <div class="col-md-8 col-xl-9">
+    <div class="card h-100"><div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+          <h1 class="h5 mb-1">
+            {% if res.iteration == 0 %}<i class="bi bi-search"></i> Recherche simple
+            {% else %}<i class="bi bi-arrow-repeat"></i> Retour de pertinence — itération {{ res.iteration }}{% endif %}
+          </h1>
+          <div class="small text-muted">
+            {% if res.iteration == 0 %}Poids égaux, distance euclidienne normalisée par groupe de descripteurs
+            {% else %}{{ methods[res.method] }} · {{ res.relevant_count }} image(s) pertinente(s) et {{ res.non_relevant_count }} non pertinente(s) cumulées{% endif %}
+            · {{ res.scope }} résultats
+          </div>
+        </div>
+        {% if precision is not none %}
+        <div class="text-end">
+          <div class="metric">{{ '%.0f'|format(precision * 100) }} %</div>
+          <div class="tiny text-muted">Précision@{{ res.scope }}<br>(vérité terrain GHIM-10K)</div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-6">
+          <div class="tiny fw-bold text-muted text-uppercase mb-1">Importance des groupes de descripteurs (e<sub>m</sub>)</div>
+          {% set gl = {'color_hist':'Histogramme HSV','color_moments':'Moments de couleur','dominant_colors':'Couleurs dominantes','glcm':'GLCM (Haralick)','lbp':'LBP'} %}
+          {% for g, v in res.weights.groups.items() %}
+          <div class="d-flex align-items-center gap-2 tiny">
+            <span style="width:130px">{{ gl[g] }}</span>
+            <div class="progress flex-grow-1" style="height:8px"><div class="progress-bar {% if loop.index <= 3 %}bg-warning{% else %}bg-info{% endif %}" style="width: {{ v * 100 }}%"></div></div>
+            <span style="width:38px" class="text-end">{{ '%.0f'|format(v * 100) }} %</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="col-md-6">
+          {% if state.history|length > 1 and state.history[0].precision is not none %}
+          <div class="tiny fw-bold text-muted text-uppercase mb-1">Évolution de la précision</div>
+          <canvas id="histChart" height="110"></canvas>
+          {% else %}
+          <div class="tiny text-muted mt-3"><i class="bi bi-info-circle"></i> Marquez les images <span class="text-success fw-bold">pertinentes</span> et
+            <span class="text-danger fw-bold">non pertinentes</span>, choisissez la méthode puis cliquez sur « Itération suivante ».</div>
+          {% endif %}
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+{# ---------- Formulaire de retour de pertinence ---------- #}
+<form method="post" action="{{ url_for('search.feedback') }}" id="rfForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="session_id" value="{{ res.session_id }}">
+  <div class="rf-toolbar d-flex flex-wrap align-items-center gap-2 mb-3">
+    <select class="form-select form-select-sm" name="method" style="width:auto">
+      {% for k, v in methods.items() %}<option value="{{ k }}" {% if k == state.method %}selected{% endif %}>{{ v }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-sm btn-success"><i class="bi bi-arrow-repeat"></i> Itération suivante</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="markRestNon">Non marquées → non pertinentes</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="clearMarks">Effacer les marques</button>
+    {% if state.query_label is not none %}
+    <button type="button" class="btn btn-sm btn-outline-info" id="autoMark" data-label="{{ state.query_label }}" title="Simule un utilisateur : pertinente = même classe GHIM-10K que la requête"><i class="bi bi-robot"></i> Marquer selon la classe (démo)</button>
+    {% endif %}
+    <span class="ms-auto small"><span class="text-success fw-bold" id="nRel">0</span> pertinente(s) · <span class="text-danger fw-bold" id="nNon">0</span> non pertinente(s)</span>
+    <a class="btn btn-sm btn-outline-dark" href="{{ url_for('search.form') }}"><i class="bi bi-x-lg"></i> Nouvelle recherche</a>
+  </div>
+
+  <div class="row g-2 results-grid">
+    {% for r in results %}
+    {% set j = judged.get(r.image.id|string) %}
+    <div class="col-6 col-sm-4 col-md-3 col-xl-2">
+      <div class="card result-card h-100 {% if j == 1 %}is-rel{% elif j == 0 %}is-non{% endif %}" data-id="{{ r.image.id }}" data-label="{{ r.image.label if r.image.label is not none else '' }}">
+        <span class="rank-badge">#{{ r.rank }}</span>
+        {% if state.query_label is not none and r.image.label is not none %}
+          <span class="truth-dot {% if r.image.label == state.query_label %}ok{% else %}ko{% endif %}" title="Classe {{ r.image.label }}"></span>
+        {% endif %}
+        <a href="{{ url_for('gallery.detail', image_id=r.image.id) }}" target="_blank"><img src="{{ url_for('gallery.thumb', image_id=r.image.id) }}" loading="lazy"></a>
+        <div class="card-body p-1">
+          <div class="d-flex justify-content-between tiny text-muted px-1"><span class="text-truncate" style="max-width:70%">{{ r.image.original_name }}</span><span>d={{ '%.3f'|format(r.distance) }}</span></div>
+          <div class="btn-group w-100 mt-1" role="group">
+            <input type="checkbox" class="btn-check rel" name="relevant" value="{{ r.image.id }}" id="r{{ r.image.id }}" {% if j == 1 %}checked{% endif %}>
+            <label class="btn btn-sm btn-outline-success" for="r{{ r.image.id }}"><i class="bi bi-hand-thumbs-up"></i></label>
+            <input type="checkbox" class="btn-check non" name="non_relevant" value="{{ r.image.id }}" id="n{{ r.image.id }}" {% if j == 0 %}checked{% endif %}>
+            <label class="btn btn-sm btn-outline-danger" for="n{{ r.image.id }}"><i class="bi bi-hand-thumbs-down"></i></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.js') }}"></script>
+<script>
+(function () {
+  const cards = [...document.querySelectorAll('.result-card')];
+  const nRel = document.getElementById('nRel'), nNon = document.getElementById('nNon');
+  function refresh() {
+    let r = 0, n = 0;
+    cards.forEach(c => {
+      const rel = c.querySelector('.rel').checked, non = c.querySelector('.non').checked;
+      c.classList.toggle('is-rel', rel); c.classList.toggle('is-non', non);
+      r += rel; n += non;
+    });
+    nRel.textContent = r; nNon.textContent = n;
+  }
+  cards.forEach(c => {
+    const rel = c.querySelector('.rel'), non = c.querySelector('.non');
+    rel.addEventListener('change', () => { if (rel.checked) non.checked = false; refresh(); });
+    non.addEventListener('change', () => { if (non.checked) rel.checked = false; refresh(); });
+  });
+  document.getElementById('markRestNon').onclick = () => { cards.forEach(c => { if (!c.querySelector('.rel').checked) c.querySelector('.non').checked = true; }); refresh(); };
+  document.getElementById('clearMarks').onclick = () => { cards.forEach(c => c.querySelectorAll('input').forEach(i => i.checked = false)); refresh(); };
+  const auto = document.getElementById('autoMark');
+  if (auto) auto.onclick = () => {
+    cards.forEach(c => { const ok = c.dataset.label === auto.dataset.label; c.querySelector('.rel').checked = ok; c.querySelector('.non').checked = !ok; });
+    refresh();
+  };
+  refresh();
+
+  const H = {{ state.history|tojson }};
+  const el = document.getElementById('histChart');
+  if (el) new Chart(el, {
+    type: 'line',
+    data: {labels: H.map(h => h.iteration === 0 ? 'Simple' : 'It. ' + h.iteration),
+           datasets: [{data: H.map(h => h.precision === null ? null : Math.round(h.precision * 100)), borderColor: '#198754', backgroundColor: 'rgba(25,135,84,.15)', fill: true, tension: .25, pointRadius: 4}]},
+    options: {animation: false, plugins: {legend: {display: false}}, scales: {y: {min: 0, max: 100, ticks: {callback: v => v + ' %'}}}}
+  });
+})();
+</script>
+{% endblock %}

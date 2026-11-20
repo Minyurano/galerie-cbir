@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Descripteurs · {{ img.original_name }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h4 mb-0"><i class="bi bi-bar-chart-line"></i> Descripteurs du contenu visuel</h1>
+  <div class="d-flex gap-2">
+    <div class="btn-group btn-group-sm">
+      {% for t, l in [('all','Tous'),('color','Couleur'),('texture','Texture')] %}
+      <a class="btn {% if types == t %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('gallery.descriptors', image_id=img.id, types=t) }}">{{ l }}</a>
+      {% endfor %}
+    </div>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('gallery.detail', image_id=img.id) }}"><i class="bi bi-arrow-left"></i> Retour</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4 col-xl-3">
+    <div class="card h-100"><div class="card-body text-center">
+      <img class="img-fluid rounded" src="{{ url_for('gallery.thumb', image_id=img.id) }}" alt="">
+      <div class="small mt-2 fw-semibold text-break">{{ img.original_name }}</div>
+      <div class="tiny text-muted">{{ d.image_size.width }} × {{ d.image_size.height }} px · calculé par l'API en {{ d.elapsed_ms }} ms</div>
+    </div></div>
+  </div>
+
+  {% if d.color %}
+  <div class="col-md-8 col-xl-9">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="section-title"><i class="bi bi-palette2"></i> Couleurs dominantes <span class="text-muted fw-normal small">(K-means, K = 5, espace Lab)</span></h6>
+      <div class="dominant-bar mb-2">
+        {% for c in d.color.dominant_colors if c.proportion > 0 %}
+        <div style="flex: {{ c.proportion }}; background: {{ c.hex }}" title="{{ c.hex }} · {{ '%.1f'|format(c.proportion * 100) }} %"></div>
+        {% endfor %}
+      </div>
+      <div class="d-flex flex-wrap gap-3">
+        {% for c in d.color.dominant_colors if c.proportion > 0 %}
+        <div class="d-flex align-items-center gap-2 small">
+          <span class="swatch" style="background: {{ c.hex }}"></span>
+          <span><code>{{ c.hex }}</code><br><span class="text-muted">RGB({{ c.rgb|join(', ') }}) · {{ '%.1f'|format(c.proportion * 100) }} %</span></span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <h6 class="section-title mt-4"><i class="bi bi-calculator"></i> Moments de couleur <span class="text-muted fw-normal small">(canaux HSV ramenés à [0, 1])</span></h6>
+      <table class="table table-sm table-bordered text-center small mb-0">
+        <thead class="table-light"><tr><th>Canal</th><th>Moyenne μ</th><th>Écart-type σ</th><th>Asymétrie s</th></tr></thead>
+        <tbody>
+        {% for ch, name in [('H','Teinte (H)'),('S','Saturation (S)'),('V','Valeur (V)')] %}
+          <tr><th>{{ name }}</th>
+            <td>{{ '%.4f'|format(d.color.moments[ch].mean) }}</td>
+            <td>{{ '%.4f'|format(d.color.moments[ch].std) }}</td>
+            <td>{{ '%.4f'|format(d.color.moments[ch].skewness) }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+  {% endif %}
+</div>
+
+{% if d.color %}
+<div class="row g-3 mb-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-bar-chart"></i> Histogramme de couleur HSV — projections</h6>
+    <p class="tiny text-muted">Histogramme 3D quantifié {{ d.color.histogram.bins|join(' × ') }} = 128 cases, normalisé (somme = 1). Ci-dessous ses projections sur chaque canal.</p>
+    <canvas id="hueChart" height="150"></canvas>
+    <div class="row mt-2"><div class="col-6"><canvas id="satChart" height="160"></canvas></div><div class="col-6"><canvas id="valChart" height="160"></canvas></div></div>
+  </div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-grid-3x3"></i> Histogramme HSV complet (128 cases)</h6>
+    <p class="tiny text-muted">Chaque case = une combinaison (teinte, saturation, valeur) ; la couleur de la barre est celle du centre de la case.</p>
+    <canvas id="histChart" height="230"></canvas>
+  </div></div></div>
+</div>
+{% if d.color.rgb_histograms %}
+<div class="row g-3 mb-3">
+  <div class="col-12"><div class="card"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-palette"></i> Histogrammes des canaux Rouge, Vert, Bleu et des niveaux de gris</h6>
+    <p class="tiny text-muted">{{ d.color.rgb_histograms.bins }} intervalles d'intensité de 0 (sombre) à 255 (clair), proportion des pixels dans chaque intervalle. Une courbe décalée vers la droite indique un canal dominant.</p>
+    <canvas id="rgbChart" height="70"></canvas>
+  </div></div></div>
+</div>
+{% endif %}
+{% endif %}
+
+{% if d.texture %}
+<div class="row g-3 mb-3">
+  <div class="col-lg-7"><div class="card h-100"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-bricks"></i> Matrice de co-occurrence (GLCM) — caractéristiques de Haralick</h6>
+    <p class="tiny text-muted">{{ d.texture.glcm.levels }} niveaux de gris, distances {{ d.texture.glcm.distances|join(' et ') }} px, moyenne sur les angles {{ d.texture.glcm.angles_deg|join('°, ') }}°.</p>
+    {% set glcm_help = {
+      'contrast': 'Différence locale d’intensité (texture marquée → élevé)',
+      'dissimilarity': 'Variante linéaire du contraste',
+      'homogeneity': 'Proximité des valeurs à la diagonale (texture lisse → élevé)',
+      'energy': 'Uniformité / régularité de la texture',
+      'correlation': 'Dépendance linéaire des niveaux de gris voisins',
+      'ASM': 'Second moment angulaire (énergie²)',
+      'entropy': 'Désordre / complexité de la texture'} %}
+    {% set glcm_fr = {'contrast':'Contraste','dissimilarity':'Dissimilarité','homogeneity':'Homogénéité','energy':'Énergie','correlation':'Corrélation','ASM':'ASM','entropy':'Entropie'} %}
+    <table class="table table-sm table-hover small mb-0">
+      <thead class="table-light"><tr><th>Caractéristique</th><th class="text-end">d = 1</th><th class="text-end">d = 2</th><th class="text-end">Moyenne</th><th>Interprétation</th></tr></thead>
+      <tbody>
+      {% for p, v in d.texture.glcm.features.items() %}
+        <tr><th>{{ glcm_fr[p] }}</th><td class="text-end">{{ '%.4f'|format(v.d1) }}</td><td class="text-end">{{ '%.4f'|format(v.d2) }}</td>
+          <td class="text-end fw-semibold">{{ '%.4f'|format(v.mean) }}</td><td class="tiny text-muted">{{ glcm_help[p] }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div></div>
+  <div class="col-lg-5"><div class="card h-100"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-diagram-3"></i> Histogramme des motifs binaires locaux (LBP)</h6>
+    <p class="tiny text-muted">LBP uniformes, P = {{ d.texture.lbp.P }} voisins, R = {{ d.texture.lbp.R }} ; classes 0–8 = motifs uniformes (nombre de voisins ≥ centre), 9 = motifs non uniformes.</p>
+    <canvas id="lbpChart" height="220"></canvas>
+  </div></div></div>
+</div>
+{% if d.texture.lbp_full %}
+<div class="row g-3 mb-3">
+  <div class="col-lg-4"><div class="card h-100"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-image-alt"></i> Image LBP</h6>
+    <p class="tiny text-muted">Chaque pixel est remplacé par son code LBP (0 à 255) : les zones plates, les contours et le grain de la texture deviennent visibles.</p>
+    {% if d.texture.lbp_full.image %}<img src="{{ d.texture.lbp_full.image }}" alt="Image des codes LBP" class="img-fluid rounded border w-100" style="image-rendering:pixelated">{% endif %}
+  </div></div></div>
+  <div class="col-lg-8"><div class="card h-100"><div class="card-body">
+    <h6 class="section-title"><i class="bi bi-bar-chart-steps"></i> Histogramme LBP complet (256 motifs)</h6>
+    <p class="tiny text-muted">LBP classique, P = {{ d.texture.lbp_full.P }}, R = {{ d.texture.lbp_full.R }} : fréquence de chacun des 256 codes binaires. Les barres foncées sont les 58 motifs uniformes (au plus 2 transitions 0/1), regroupés dans l'histogramme ci-dessus.</p>
+    <canvas id="lbp256Chart" height="120"></canvas>
+  </div></div></div>
+</div>
+{% endif %}
+{% endif %}
+
+<details class="mt-2"><summary class="small text-muted">Réponse JSON brute de l'API</summary>
+<pre class="json-box small">{{ d_json }}</pre></details>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.js') }}"></script>
+<script>
+const D = {{ d|tojson }};
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.display = false;
+function hsl(h, s, v) {   // couleur d'affichage d'une case HSV (h en degrés, s et v dans [0,1])
+  const f = (n, k = (n + h / 60) % 6) => v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+  return `rgb(${Math.round(f(5) * 255)},${Math.round(f(3) * 255)},${Math.round(f(1) * 255)})`;
+}
+function bar(id, labels, data, colors, title) {
+  new Chart(document.getElementById(id), {
+    type: 'bar', data: {labels, datasets: [{data, backgroundColor: colors, borderWidth: 0}]},
+    options: {plugins: {title: {display: !!title, text: title}}, scales: {y: {beginAtZero: true}}, animation: false}
+  });
+}
+if (D.color) {
+  const [hb, sb, vb] = D.color.histogram.bins;
+  bar('hueChart', [...Array(hb).keys()].map(i => `${Math.round(i * 360 / hb)}–${Math.round((i + 1) * 360 / hb)}°`),
+      D.color.histogram.hue, [...Array(hb).keys()].map(i => hsl((i + .5) * 360 / hb, .85, .9)), 'Teinte (H)');
+  bar('satChart', [...Array(sb).keys()].map(i => `S${i + 1}`), D.color.histogram.saturation,
+      [...Array(sb).keys()].map(i => hsl(210, (i + .5) / sb, .85)), 'Saturation (S)');
+  bar('valChart', [...Array(vb).keys()].map(i => `V${i + 1}`), D.color.histogram.value,
+      [...Array(vb).keys()].map(i => hsl(0, 0, (i + .5) / vb)), 'Valeur (V)');
+  const labels = [], cols = [];
+  for (let h = 0; h < hb; h++) for (let s = 0; s < sb; s++) for (let v = 0; v < vb; v++) {
+    labels.push(`H${h} S${s} V${v}`); cols.push(hsl((h + .5) * 360 / hb, (s + .5) / sb, (v + .5) / vb));
+  }
+  new Chart(document.getElementById('histChart'), {
+    type: 'bar', data: {labels, datasets: [{data: D.color.histogram.values, backgroundColor: cols, borderWidth: 0, barPercentage: 1, categoryPercentage: 1}]},
+    options: {animation: false, scales: {x: {ticks: {display: false}, grid: {display: false}}, y: {beginAtZero: true}}}
+  });
+}
+if (D.color && D.color.rgb_histograms) {
+  const H = D.color.rgb_histograms, n = H.bins, step = 256 / n;
+  const line = (label, data, color) => ({label, data, borderColor: color, backgroundColor: color + '22', fill: true, pointRadius: 0, borderWidth: 1.6, tension: .25});
+  new Chart(document.getElementById('rgbChart'), {
+    type: 'line',
+    data: {labels: [...Array(n).keys()].map(i => Math.round(i * step)),
+           datasets: [line('Rouge', H.R, '#d62728'), line('Vert', H.G, '#2ca02c'), line('Bleu', H.B, '#1f77b4'), line('Gris', H.gray, '#555555')]},
+    options: {animation: false, plugins: {legend: {display: true, position: 'top'}},
+              scales: {x: {title: {display: true, text: 'Intensité'}, ticks: {maxTicksLimit: 9}}, y: {beginAtZero: true}}}
+  });
+}
+if (D.texture && D.texture.lbp_full) {
+  const uni = c => { let t = 0; for (let k = 0; k < 8; k++) t += ((c >> k) & 1) !== ((c >> ((k + 1) % 8)) & 1); return t <= 2; };
+  new Chart(document.getElementById('lbp256Chart'), {
+    type: 'bar',
+    data: {labels: [...Array(256).keys()], datasets: [{data: D.texture.lbp_full.histogram,
+           backgroundColor: [...Array(256).keys()].map(c => uni(c) ? '#3346c4' : '#aab4ee'), borderWidth: 0, barPercentage: 1, categoryPercentage: 1}]},
+    options: {animation: false, scales: {x: {ticks: {maxTicksLimit: 17}, grid: {display: false}}, y: {beginAtZero: true}}}
+  });
+}
+if (D.texture) {
+  bar('lbpChart', [...Array(D.texture.lbp.histogram.length).keys()].map(i => i < 9 ? `${i}` : 'NU'),
+      D.texture.lbp.histogram, '#4f6bed');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Descripteurs d'un ensemble d'images{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <h1 class="h4 mb-0"><i class="bi bi-table"></i> Descripteurs de {{ rows|length }} image(s)</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-sm btn-primary" href="{{ url_for('gallery.descriptors_batch_csv', ids=ids) }}"><i class="bi bi-filetype-csv"></i> Exporter en CSV</a>
+    <a class="btn btn-sm btn-outline-secondary" href="javascript:history.back()"><i class="bi bi-arrow-left"></i> Retour</a>
+  </div>
+</div>
+<p class="small text-muted">Un seul appel à l'API (<code>POST /api/descriptors</code>, envoi multiple) calcule les descripteurs de toutes les images sélectionnées.</p>
+<div class="table-responsive">
+<table class="table table-sm table-hover align-middle small batch-table">
+  <thead class="table-light">
+    <tr>
+      <th>Image</th><th>Couleurs dominantes</th>
+      <th class="text-end">μ<sub>H</sub></th><th class="text-end">μ<sub>S</sub></th><th class="text-end">μ<sub>V</sub></th>
+      <th class="text-end">Contraste</th><th class="text-end">Corrélation</th><th class="text-end">Énergie</th><th class="text-end">Homogénéité</th><th class="text-end">Entropie</th>
+      <th>LBP</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for img, r in rows %}
+    {% if r.error %}
+    <tr><td colspan="12" class="text-danger">{{ img.original_name }} : {{ r.error }}</td></tr>
+    {% else %}{% set d = r.descriptors %}{% set g = d.texture.glcm.features %}
+    <tr>
+      <td><img class="mini-thumb me-2" src="{{ url_for('gallery.thumb', image_id=img.id) }}"><span class="text-truncate d-inline-block align-middle" style="max-width:140px">{{ img.original_name }}</span></td>
+      <td><div class="dominant-bar small-bar">{% for c in d.color.dominant_colors if c.proportion > 0 %}<div style="flex: {{ c.proportion }}; background: {{ c.hex }}" title="{{ c.hex }}"></div>{% endfor %}</div></td>
+      <td class="text-end">{{ '%.3f'|format(d.color.moments.H.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(d.color.moments.S.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(d.color.moments.V.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(g.contrast.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(g.correlation.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(g.energy.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(g.homogeneity.mean) }}</td>
+      <td class="text-end">{{ '%.3f'|format(g.entropy.mean) }}</td>
+      <td><div class="spark">{% for v in d.texture.lbp.histogram %}<span style="height: {{ (v * 100 / (d.texture.lbp.histogram|max))|round(0) }}%"></span>{% endfor %}</div></td>
+      <td><a class="btn btn-sm btn-link" href="{{ url_for('gallery.descriptors', image_id=img.id) }}">Détail</a></td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

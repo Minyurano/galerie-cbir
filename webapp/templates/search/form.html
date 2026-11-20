@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Recherche par le contenu{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1"><i class="bi bi-search"></i> Recherche d'images par le contenu</h1>
+<p class="text-muted small">
+  {% if info %}{{ info.size }} image(s) indexée(s) dans votre collection · {% endif %}
+  Méthode de retour de pertinence par défaut : <strong>{{ methods[default_method] }}</strong>
+</p>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="section-title"><i class="bi bi-upload"></i> Image requête externe</h6>
+      <p class="small text-muted">L'image n'est pas ajoutée à la galerie : seuls ses descripteurs sont calculés pour la recherche.</p>
+      <form method="post" action="{{ url_for('search.by_upload') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input class="form-control mb-2" type="file" name="query" accept="image/*" required>
+        <div class="row g-2">
+          <div class="col-5"><label class="form-label small mb-0">Nombre de résultats</label>
+            <input class="form-control form-control-sm" type="number" name="scope" value="{{ scope }}" min="5" max="100"></div>
+          <div class="col-7"><label class="form-label small mb-0">Retour de pertinence</label>
+            <select class="form-select form-select-sm" name="method">
+              {% for k, v in methods.items() %}<option value="{{ k }}" {% if k == default_method %}selected{% endif %}>{{ v }}</option>{% endfor %}
+            </select></div>
+        </div>
+        <button class="btn btn-primary mt-3 w-100"><i class="bi bi-search"></i> Rechercher</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100"><div class="card-body">
+      <h6 class="section-title"><i class="bi bi-images"></i> Ou choisir une image de la galerie</h6>
+      <p class="small text-muted">Cliquez sur une image (ou utilisez l'icône <i class="bi bi-search"></i> dans la galerie).</p>
+      <div class="row g-2">
+        {% for img in recent %}
+        <div class="col-3 col-xl-2"><a href="{{ url_for('search.by_image', image_id=img.id) }}" title="{{ img.original_name }}">
+          <img class="img-fluid rounded pick-thumb" src="{{ url_for('gallery.thumb', image_id=img.id) }}"></a></div>
+        {% else %}<p class="text-muted small">La galerie est vide.</p>{% endfor %}
+      </div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

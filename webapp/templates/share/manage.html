@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Mes partages{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1"><i class="bi bi-share"></i> Mes liens de partage</h1>
+<p class="small text-muted">Envoyez un lien par e-mail, WhatsApp… La personne voit les images en lecture seule, sans créer de compte.
+  Pour qu'elle puisse l'ouvrir à distance, ouvrez vous-même la galerie par son <strong>adresse publique</strong> avant de copier le lien (voir le README).</p>
+
+<form method="post" class="card card-body py-2 mb-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label class="form-label small mb-1 fw-semibold"><i class="bi bi-globe"></i> Adresse publique de la galerie
+    <span class="fw-normal text-muted">(copiée depuis l'onglet « Ports » de VS Code)</span></label>
+  <div class="input-group input-group-sm">
+    <input class="form-control" name="public_url" value="{{ public_url }}" placeholder="https://xxxx-5000.euw.devtunnels.ms">
+    <button class="btn btn-primary">Enregistrer</button>
+  </div>
+</form>
+{% if local %}
+<div class="alert alert-warning small py-2"><i class="bi bi-exclamation-triangle"></i>
+  Aucune adresse publique : ces liens (<code>{{ request.host }}</code>) ne fonctionnent que sur cet ordinateur.
+  Collez ci-dessus l'adresse publique donnée par VS Code pour pouvoir les envoyer à distance.</div>
+{% endif %}
+
+{% if shares %}
+<div class="table-responsive"><table class="table table-sm align-middle bg-white">
+  <thead class="table-light"><tr><th>Contenu partagé</th><th>Lien</th><th>Options</th><th>Expire</th><th class="text-end">Visites</th><th></th></tr></thead>
+  <tbody>
+  {% for s in shares %}
+  {% set link = links[s.id] %}
+  <tr class="{% if s.id == new_id %}table-success{% endif %} {% if s.expired %}text-muted{% endif %}">
+    <td><i class="bi {% if s.image_id %}bi-image{% else %}bi-folder2{% endif %}"></i> {{ s.title }}</td>
+    <td style="min-width:320px">
+      <div class="input-group input-group-sm">
+        <input class="form-control" value="{{ link }}" readonly id="l{{ s.id }}">
+        <button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('l{{ s.id }}').value); this.innerHTML='<i class=\'bi bi-check2\'></i> Copié'"><i class="bi bi-clipboard"></i> Copier</button>
+        <a class="btn btn-outline-secondary" href="{{ link }}" target="_blank" title="Ouvrir"><i class="bi bi-box-arrow-up-right"></i></a>
+      </div>
+    </td>
+    <td class="tiny">{% if s.category_id %}{{ 'avec' if s.include_sub else 'sans' }} sous-catégories<br>{% endif %}{{ 'téléchargement autorisé' if s.allow_download else 'affichage seul' }}</td>
+    <td class="small">{% if s.expired %}<span class="badge bg-secondary">expiré</span>{% elif s.expires_at %}{{ s.expires_at.strftime('%d/%m/%Y') }}{% else %}jamais{% endif %}</td>
+    <td class="text-end small">{{ s.views or 0 }}</td>
+    <td class="text-end">
+      <form method="post" action="{{ url_for('share.revoke', share_id=s.id) }}" data-confirm="Révoquer ce lien ? Il ne fonctionnera plus.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-circle"></i> Révoquer</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="text-center py-5 text-muted"><i class="bi bi-share fs-1"></i>
+  <p class="mt-2">Aucun partage. Ouvrez une catégorie (menu <i class="bi bi-gear"></i> → Partager) ou une image (bouton « Partager cette image »).</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ img.original_name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('gallery.index') }}"><i class="bi bi-house"></i></a></li>
+    {% if img.category %}{% for c in img.category.path() %}<li class="breadcrumb-item"><a href="{{ url_for('gallery.index', cat=c.id) }}">{{ c.name }}</a></li>{% endfor %}{% endif %}
+    <li class="breadcrumb-item active">{{ img.original_name }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card"><div class="card-body text-center bg-checker">
+      <img class="img-fluid detail-img" src="{{ url_for('gallery.file', image_id=img.id) }}" alt="{{ img.original_name }}">
+    </div></div>
+    {% if derived %}
+    <h6 class="mt-4">Images créées à partir de celle-ci</h6>
+    <div class="d-flex flex-wrap gap-2">
+      {% for d in derived %}<a href="{{ url_for('gallery.detail', image_id=d.id) }}" title="{{ d.transform }}"><img class="mini-thumb" src="{{ url_for('gallery.thumb', image_id=d.id) }}"></a>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-body">
+      <h5 class="card-title text-break">{{ img.original_name }}</h5>
+      <table class="table table-sm small mb-0">
+        <tr><th>Dimensions</th><td>{{ img.width }} × {{ img.height }} px</td></tr>
+        <tr><th>Taille</th><td>{{ '%.1f'|format((img.size_bytes or 0) / 1024) }} Ko</td></tr>
+        <tr><th>Origine</th><td>{{ {'upload':'Chargée','transform':'Transformation','import':'Import GHIM-10K'}[img.source] }}</td></tr>
+        {% if img.transform %}<tr><th>Opérations</th><td>{{ img.transform }}</td></tr>{% endif %}
+        {% if parent %}<tr><th>Image source</th><td><a href="{{ url_for('gallery.detail', image_id=parent.id) }}">{{ parent.original_name }}</a></td></tr>{% endif %}
+        {% if img.label is not none %}<tr><th>Classe GHIM-10K</th><td>{{ img.label }}</td></tr>{% endif %}
+        <tr><th>Indexée</th><td>{% if img.indexed %}<span class="text-success"><i class="bi bi-check-circle"></i> oui</span>{% else %}<span class="text-warning"><i class="bi bi-exclamation-triangle"></i> non</span>{% endif %}</td></tr>
+        <tr><th>Ajoutée le</th><td>{{ img.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+      </table>
+    </div></div>
+
+    <div class="d-grid gap-2">
+      <a class="btn btn-primary" href="{{ url_for('search.by_image', image_id=img.id) }}"><i class="bi bi-search"></i> Rechercher les images similaires</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('gallery.descriptors', image_id=img.id) }}"><i class="bi bi-bar-chart-line"></i> Afficher les descripteurs</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('gallery.transform', image_id=img.id) }}"><i class="bi bi-magic"></i> Créer une image transformée</a>
+      <a class="btn btn-outline-secondary" href="{{ url_for('gallery.download', image_id=img.id) }}"><i class="bi bi-download"></i> Télécharger</a>
+      <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#shareModal"><i class="bi bi-share"></i> Partager cette image</button>
+    </div>
+    {% with target_field='image_id', target_id=img.id, target_label=img.original_name, sub=False %}{% include "share/modal.html" %}{% endwith %}
+
+    <form class="mt-3" method="post" action="{{ url_for('gallery.move', image_id=img.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="form-label small mb-1">Catégorie</label>
+      <div class="input-group input-group-sm">
+        <select class="form-select" name="category_id"><option value="">Racine</option>
+          {% for label, cid in cat_options %}<option value="{{ cid }}" {% if img.category_id == cid %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-outline-secondary">Déplacer</button>
+      </div>
+    </form>
+
+    <div class="d-flex gap-2 mt-3">
+      <form method="post" action="{{ url_for('gallery.reindex', image_id=img.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-repeat"></i> Réindexer</button>
+      </form>
+      <form method="post" action="{{ url_for('gallery.delete', image_id=img.id) }}" data-confirm="Supprimer définitivement cette image ?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{# Fenêtre de création d'un lien de partage (catégorie ou image) #}
+<div class="modal fade" id="shareModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{{ url_for('share.create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="{{ target_field }}" value="{{ target_id }}">
+    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-share"></i> Partager « {{ target_label }} »</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <p class="small text-muted">Un lien public est créé. Toute personne qui le reçoit peut <strong>voir</strong> ces images sans compte, mais ne peut rien modifier ni supprimer.</p>
+      {% if sub %}
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="include_sub" id="shSub" checked>
+        <label class="form-check-label" for="shSub">Inclure les sous-catégories</label></div>
+      {% endif %}
+      <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="allow_download" id="shDl" checked>
+        <label class="form-check-label" for="shDl">Autoriser le téléchargement</label></div>
+      <label class="form-label small mb-1">Durée de validité</label>
+      <select class="form-select form-select-sm" name="days">
+        <option value="1">1 jour</option><option value="7" selected>7 jours</option>
+        <option value="30">30 jours</option><option value="0">Sans limite (jusqu'à révocation)</option>
+      </select>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary btn-sm"><i class="bi bi-link-45deg"></i> Créer le lien</button></div>
+  </form>
+</div></div></div>

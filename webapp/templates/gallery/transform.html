@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Transformer {{ img.original_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='vendor/cropper/cropper.min.css') }}">{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h4 mb-0"><i class="bi bi-magic"></i> Nouvelle image à partir de « {{ img.original_name }} »</h1>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('gallery.detail', image_id=img.id) }}"><i class="bi bi-arrow-left"></i> Retour</a>
+</div>
+<form method="post" id="tform">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card"><div class="card-body">
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="enableCrop">
+          <label class="form-check-label" for="enableCrop"><strong>Recadrer</strong> : activez puis tracez la zone sur l'image</label>
+        </div>
+        <div class="crop-box"><img id="srcImg" src="{{ url_for('gallery.file', image_id=img.id) }}" alt=""></div>
+        <div class="row g-2 mt-2 small">
+          {% for f, l in [('crop_x','x'),('crop_y','y'),('crop_w','largeur'),('crop_h','hauteur')] %}
+          <div class="col-3"><label class="form-label mb-0">{{ l }}</label><input class="form-control form-control-sm" name="{{ f }}" id="{{ f }}" type="number" min="0" readonly></div>
+          {% endfor %}
+        </div>
+      </div></div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card mb-3"><div class="card-body">
+        <h6><i class="bi bi-aspect-ratio"></i> Changement d'échelle</h6>
+        <div class="row g-2">
+          <div class="col-4"><label class="form-label small mb-0">Échelle (%)</label><input class="form-control form-control-sm" name="scale" type="number" min="5" max="500" step="1" placeholder="100"></div>
+          <div class="col-4"><label class="form-label small mb-0">ou largeur</label><input class="form-control form-control-sm" name="resize_w" type="number" min="1" max="10000"></div>
+          <div class="col-4"><label class="form-label small mb-0">hauteur</label><input class="form-control form-control-sm" name="resize_h" type="number" min="1" max="10000"></div>
+        </div>
+        <div class="form-check mt-1"><input class="form-check-input" type="checkbox" name="keep_ratio" id="kr" checked><label class="form-check-label small" for="kr">Conserver les proportions</label></div>
+        <p class="tiny text-muted mb-0">Image d'origine : {{ img.width }} × {{ img.height }} px</p>
+      </div></div>
+
+      <div class="card mb-3"><div class="card-body">
+        <h6><i class="bi bi-arrow-clockwise"></i> Rotation et miroir</h6>
+        <div class="row g-2 align-items-end">
+          <div class="col-5"><label class="form-label small mb-0">Angle (°, sens anti-horaire)</label>
+            <input class="form-control form-control-sm" name="rotate" type="number" min="-360" max="360" step="1" placeholder="0"></div>
+          <div class="col-7">
+            <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="flip_h" id="fh"><label class="form-check-label small" for="fh">Miroir horizontal</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="flip_v" id="fv"><label class="form-check-label small" for="fv">Miroir vertical</label></div>
+          </div>
+        </div>
+      </div></div>
+
+      <div class="card mb-3"><div class="card-body">
+        <h6><i class="bi bi-palette"></i> Couleurs et filtres</h6>
+        {% for f, l in [('brightness','Luminosité'),('contrast','Contraste'),('saturation','Saturation')] %}
+        <label class="form-label small mb-0">{{ l }} : <span id="{{ f }}v">100</span> %</label>
+        <input type="range" class="form-range" name="{{ f }}" min="0" max="300" value="100" oninput="document.getElementById('{{ f }}v').textContent=this.value">
+        {% endfor %}
+        <label class="form-label small mb-0">Flou gaussien (rayon) : <span id="blurv">0</span></label>
+        <input type="range" class="form-range" name="blur" min="0" max="10" step="0.5" value="0" oninput="document.getElementById('blurv').textContent=this.value">
+        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="grayscale" id="gs"><label class="form-check-label small" for="gs">Niveaux de gris</label></div>
+        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="sharpen" id="sh"><label class="form-check-label small" for="sh">Netteté</label></div>
+        <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="equalize" id="eq"><label class="form-check-label small" for="eq">Égalisation d'histogramme</label></div>
+      </div></div>
+
+      <button class="btn btn-primary w-100"><i class="bi bi-plus-circle"></i> Créer la nouvelle image</button>
+      <p class="tiny text-muted mt-2">L'image d'origine n'est pas modifiée. La nouvelle image est enregistrée dans la même catégorie puis indexée par l'API.</p>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/cropper/cropper.min.js') }}"></script>
+<script>
+(function () {
+  const img = document.getElementById('srcImg');
+  const sw = document.getElementById('enableCrop');
+  const f = ['crop_x', 'crop_y', 'crop_w', 'crop_h'].map(id => document.getElementById(id));
+  let cropper = null;
+  sw.addEventListener('change', () => {
+    if (sw.checked) {
+      cropper = new Cropper(img, {
+        viewMode: 1, autoCropArea: 0.7, zoomable: false,
+        crop(e) { const d = e.detail; [d.x, d.y, d.width, d.height].forEach((v, i) => f[i].value = Math.round(v)); }
+      });
+    } else if (cropper) { cropper.destroy(); cropper = null; f.forEach(x => x.value = ''); }
+  });
+})();
+</script>
+{% endblock %}
