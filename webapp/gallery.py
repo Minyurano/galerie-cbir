@@ -11,6 +11,8 @@ from __future__ import annotations
 import csv
 import json
 import io
+import shutil
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -145,8 +147,13 @@ def _iter_upload(files):
     contenu d'un dossier (le navigateur transmet le chemin relatif) ou d'une archive ZIP."""
     for f in files:
         if f.filename.lower().endswith(".zip"):
+            # Copie dans un vrai fichier temporaire : sous Python 3.10, le flux reçu
+            # (SpooledTemporaryFile) n'a pas de méthode seekable() et zipfile échoue.
+            tmp = tempfile.TemporaryFile()
+            shutil.copyfileobj(f.stream, tmp)
+            tmp.seek(0)
             try:
-                zf = zipfile.ZipFile(f.stream)
+                zf = zipfile.ZipFile(tmp)
             except zipfile.BadZipFile:
                 yield f.filename, None, "archive ZIP illisible"
                 continue
