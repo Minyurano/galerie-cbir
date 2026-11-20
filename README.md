@@ -58,15 +58,21 @@ l'histogramme LBP complet (256 motifs) et l'image LBP (`?details=1`).
 
 D'après Renuka Devi SM, *Reweighing Strategies for Relevance Feedback in CBIR*, IJARCCE, 2016.
 
-| Méthode | Nouvelle requête | Poids de la composante *i* |
-|---|---|---|
-| QVM (Rocchio) | α·q + β·moy(pertinentes) − γ·moy(non pertinentes) | 1 |
-| FRE (MARS) | moyenne des images pertinentes | 1 / (ε + σ<sub>rel,i</sub>) |
-| **Re-weighting Type-1** | moyenne des images pertinentes | (ε + σ<sub>Nr,i</sub>) / (ε + σ<sub>rel,i</sub>) |
+| Méthode | Groupes (énoncé) | Nouvelle requête | Poids de la composante *i* |
+|---|---|---|---|
+| QVM (Rocchio) | G3, G7, G9, G12, G15 | α·q + β·moy(pertinentes) − γ·moy(non pertinentes) | 1 |
+| FRE (MARS) | G1, G5, G10, G13, G14, G16 | moyenne des images pertinentes | 1 / (ε + σ<sub>rel,i</sub>) |
+| **Re-weighting Type-1** | G2, G4, G6, G8, **G11** | moyenne des images pertinentes | (ε + σ<sub>Nr,i</sub>) / (ε + σ<sub>rel,i</sub>), ε = 0,0001 (éq. 5) |
 
 σ<sub>rel,i</sub> est l'écart-type de la composante sur les images pertinentes et σ<sub>Nr,i</sub>
 sur les images retournées : une composante qui varie peu chez les images pertinentes mais
 beaucoup dans les résultats est ce qui les distingue, elle reçoit donc un poids fort.
+
+`type1` applique **exactement** l'équation 5 de l'article (méthode par défaut du groupe G11).
+Le groupe propose aussi une extension, **Type-1 amélioré** (`type1plus`) : poids de l'équation 5
+normalisés et plafonnés dans chaque descripteur, plus une importance par descripteur
+(équation 14 de l'article, utilisée pour le Type-3). Elle est comparée à la version de l'article
+ci-dessous.
 
 ## Résultats sur GHIM-10K
 
@@ -78,13 +84,16 @@ utilisateur simulé (une image est pertinente si elle est de la même classe que
 | Recherche simple | 50,4 % | 50,4 % | 20,2 % |
 | QVM | 50,4 % | 64,9 % | 21,2 % |
 | FRE | 50,4 % | 69,6 % | 25,8 % |
-| **Re-weighting Type-1** | 50,4 % | **75,8 %** | **26,8 %** |
+| **Re-weighting Type-1** (article, groupe G11) | 50,4 % | **71,6 %** | **25,9 %** |
+| Type-1 amélioré (extension G11) | 50,4 % | 75,8 % | 26,8 % |
 
 ![Précision et mAP selon les itérations](docs/figures/rf_iterations_parfait.png)
 
-Type-1 est significativement meilleure que QVM et FRE (test de Wilcoxon apparié,
-p < 10<sup>-6</sup>). Elle reste la meilleure quand l'utilisateur se trompe dans 10 à 30 %
-de ses jugements, alors que QVM finit sous la recherche simple :
+Le Type-1 de l'article est nettement meilleur que QVM (test de Wilcoxon apparié sur l'AP,
+p < 10<sup>-40</sup>) et équivalent à FRE en mAP (p = 0,30), avec une meilleure précision
+sur les 25 images affichées. L'extension « Type-1 amélioré » gagne encore 4 points de
+précision (p < 10<sup>-12</sup> face au Type-1 de l'article). Quand l'utilisateur se trompe
+dans 10 à 30 % de ses jugements, QVM finit sous la recherche simple :
 
 ![Robustesse aux erreurs de l'utilisateur](docs/figures/rf_bruit.png)
 
@@ -102,7 +111,7 @@ Résultats bruts : [`docs/figures/results.json`](docs/figures/results.json).
 | Galerie et catégories | Descripteurs d'une image |
 |---|---|
 | ![Galerie](docs/captures/galerie.jpg) | ![Descripteurs](docs/captures/descripteurs.jpg) |
-| **Recherche simple** | **Après 2 itérations de Type-1** |
+| **Recherche simple** | **Après 2 itérations de retour de pertinence** |
 | ![Recherche simple](docs/captures/recherche_simple.jpg) | ![Retour de pertinence](docs/captures/retour_pertinence.jpg) |
 
 ## Architecture
@@ -120,7 +129,7 @@ flowchart LR
       direction TB
       A1[Descripteurs couleur et texture<br/>OpenCV, scikit-image]
       A2[Index par utilisateur]
-      A3[Recherche et retour de pertinence<br/>QVM, FRE, Type-1]
+      A3[Recherche et retour de pertinence<br/>QVM, FRE, Type-1, Type-1 amélioré]
     end
 ```
 
@@ -173,7 +182,7 @@ Re-weighting Type-1 ; elle se change dans `config.py` (`DEFAULT_RF_METHOD`) ou p
 d'environnement :
 
 ```bash
-CBIR_RF_METHOD=qvm python run_api.py     # qvm, fre ou type1
+CBIR_RF_METHOD=qvm python run_api.py     # qvm, fre, type1 ou type1plus
 ```
 
 ## API REST

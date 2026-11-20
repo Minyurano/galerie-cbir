@@ -24,12 +24,16 @@ Choix d'implémentation (documentés dans le rapport) :
   * la requête initiale fait toujours partie des images pertinentes ;
   * les jugements sont cumulés d'une itération à l'autre (l'utilisateur ne
     perd pas ce qu'il a déjà indiqué) ;
-  * les poids w_i sont normalisés dans chaque groupe (moyenne 1) puis bornés
-    (RF_MAX_WEIGHT) : avec peu d'exemples, un écart-type presque nul donnerait
-    sinon un poids démesuré (1/ε = 10 000) ;
+  * FRE : les poids w_i sont normalisés dans chaque groupe (moyenne 1) puis
+    bornés (RF_MAX_WEIGHT) : avec peu d'exemples, un écart-type presque nul
+    donnerait sinon un poids démesuré (1/ε = 10 000) ;
   * FRE : l'importance e_m de chaque groupe est proportionnelle au nombre
     d'images pertinentes retrouvées avec ce groupe seul (|R_m|, section III-B) ;
-  * Type-1 : l'importance des groupes suit l'équation 14 (e_m = W_m / Σ W_l).
+  * Type-1 (« type1 ») : STRICTEMENT l'équation 5 de l'article ; tous les
+    descripteurs gardent la même importance.
+  * Type-1 amélioré (« type1plus », extension du groupe G11, hors article) :
+    poids de l'équation 5 normalisés et plafonnés dans chaque groupe, et
+    importance des groupes selon l'équation 14 (e_m = W_m / Σ W_l).
 """
 from __future__ import annotations
 
@@ -50,7 +54,7 @@ METHODS = {
     },
     "fre": {
         "name": "Feature Relevance Estimation (FRE / MARS)",
-        "groups": ["G1", "G5", "G10", "G13", "G14"],
+        "groups": ["G1", "G5", "G10", "G13", "G14", "G16"],
         "description": "La requête devient la moyenne des images pertinentes ; chaque composante "
                        "reçoit le poids 1/(ε+σ_rel) et chaque groupe une importance proportionnelle "
                        "au nombre d'images pertinentes qu'il retrouve seul.",
@@ -58,9 +62,17 @@ METHODS = {
     "type1": {
         "name": "Re-weighting Type-1",
         "groups": ["G2", "G4", "G6", "G8", "G11"],
-        "description": "La requête devient la moyenne des images pertinentes ; chaque composante "
-                       "reçoit le poids (ε+σ_Nr)/(ε+σ_rel) : forte si elle varie peu chez les "
-                       "pertinentes mais beaucoup parmi les images retournées.",
+        "description": "Méthode de l'article (section III-C, équation 5) : la requête devient la "
+                       "moyenne des images pertinentes ; chaque composante reçoit le poids "
+                       "(ε+σ_Nr)/(ε+σ_rel), fort si elle varie peu chez les pertinentes mais "
+                       "beaucoup parmi les images retournées.",
+    },
+    "type1plus": {
+        "name": "Re-weighting Type-1 amélioré",
+        "groups": [],
+        "description": "Extension proposée par le groupe G11 : poids de l'équation 5 normalisés "
+                       "et plafonnés dans chaque descripteur, plus une importance par descripteur "
+                       "(équation 14). Plus stable avec peu d'exemples pertinents.",
     },
 }
 
@@ -153,7 +165,27 @@ def _fre(Xn, state, rel_now, non_now):
 
 
 def _type1(Xn, state, rel_now, non_now):
-    """Type-1 : requête = moyenne des pertinentes, w_i = (ε + σ_Nr,i) / (ε + σ_rel,i)  (éq. 5)."""
+    """Re-weighting Type-1 de l'article (section III-C), sans ajout.
+
+    - requête  : moyenne des images pertinentes (requête initiale comprise) ;
+    - poids    : w_i = (ε + σ_Nr,i) / (ε + σ_rel,i)   (équation 5, ε = 0,0001)
+                 σ_Nr,i  : écart-type de la composante i sur les N_r images retournées
+                 σ_rel,i : écart-type de la composante i sur les images pertinentes ;
+    - distance : euclidienne normalisée pondérée par w_i ; les descripteurs gardent
+                 la même importance (pas d'équation 14, propre au Type-3).
+    """
+    R = _relevant_matrix(Xn, state)
+    q = R.mean(axis=0)
+    sigma_rel = R.std(axis=0)
+    retrieved = state.last_retrieved[: state.scope]
+    sigma_nr = Xn[retrieved].std(axis=0) if len(retrieved) > 1 else np.ones_like(sigma_rel)
+    w = (config.RF_EPSILON + sigma_nr) / (config.RF_EPSILON + sigma_rel)
+    _, e = default_weights()
+    return q.astype(np.float32), w.astype(np.float32), e
+
+
+def _type1plus(Xn, state, rel_now, non_now):
+    """Type-1 amélioré (extension G11) : équation 5 + normalisation/plafond + équation 14."""
     R = _relevant_matrix(Xn, state)
     q = R.mean(axis=0)
     sigma_rel = R.std(axis=0)
@@ -171,7 +203,7 @@ def _type1(Xn, state, rel_now, non_now):
     return q.astype(np.float32), w, e.astype(np.float32)
 
 
-_IMPL = {"qvm": _qvm, "fre": _fre, "type1": _type1}
+_IMPL = {"qvm": _qvm, "fre": _fre, "type1": _type1, "type1plus": _type1plus}
 
 
 def apply_feedback(Xn: np.ndarray, state: RFState, method: str,

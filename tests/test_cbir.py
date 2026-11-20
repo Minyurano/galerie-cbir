@@ -59,7 +59,7 @@ def test_invalid_image_rejected():
 
 
 # ------------------------------------------------------- retour de pertinence
-@pytest.mark.parametrize("method", ["qvm", "fre", "type1"])
+@pytest.mark.parametrize("method", ["qvm", "fre", "type1", "type1plus"])
 def test_feedback_improves_precision_on_synthetic_data(method):
     """Deux classes séparées sur quelques composantes seulement : le retour de
     pertinence doit améliorer (ou conserver) la précision."""
@@ -310,3 +310,28 @@ def test_page_descripteurs_affiche_rgb_et_lbp(web):
              content_type="multipart/form-data")
     html = web.get("/images/1/descriptors").data.decode()
     assert "rgbChart" in html and "lbp256Chart" in html and "data:image/png;base64," in html
+
+
+def test_type1_conforme_equation_5_de_l_article():
+    """Type-1 = exactement l'équation 5 : w_i = (ε + σ_Nr,i) / (ε + σ_rel,i), requête = moyenne des pertinentes."""
+    import config
+    from api.descriptors.extractor import FEATURE_DIM
+    from api.retrieval.relevance_feedback import apply_feedback, new_state
+    rng = np.random.default_rng(3)
+    Xn = rng.normal(size=(60, FEATURE_DIM)).astype(np.float32)
+    st = new_state(Xn[0], 25, 0)
+    st.relevant.add(0)
+    st.last_retrieved = list(range(25))
+    apply_feedback(Xn, st, "type1", [3, 7, 11], [5])
+    R = Xn[[0, 3, 7, 11]]
+    attendu = (config.RF_EPSILON + Xn[:25].std(axis=0)) / (config.RF_EPSILON + R.std(axis=0))
+    assert np.allclose(st.w, attendu, rtol=1e-5)
+    assert np.allclose(st.q, R.mean(axis=0), atol=1e-6)
+    assert np.allclose(st.e, 1 / len(st.e))          # pas d'équation 14 dans Type-1
+
+
+def test_groupes_par_methode_selon_l_enonce():
+    from api.retrieval.relevance_feedback import METHODS
+    assert METHODS["qvm"]["groups"] == ["G3", "G7", "G9", "G12", "G15"]
+    assert METHODS["fre"]["groups"] == ["G1", "G5", "G10", "G13", "G14", "G16"]
+    assert METHODS["type1"]["groups"] == ["G2", "G4", "G6", "G8", "G11"]

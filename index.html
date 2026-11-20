@@ -269,13 +269,13 @@ footer{text-align:center;padding:20px;color:var(--mute);font-size:12px;border-to
     <div class="formula">D(q, I) = &Sigma;<sub>i</sub> W<sub>i</sub> &middot; d<sub>i</sub>(q, I)</div>
     <ol>
       <li><b>QVM</b> (Rocchio) : la requête est déplacée vers les images pertinentes et éloignée des non pertinentes : q' = αq + β·moy(R) − γ·moy(N).</li>
-      <li><b>FRE</b> : le poids d'un descripteur est l'inverse de sa dispersion parmi les images pertinentes (W<sub>i</sub> ∝ 1/σ<sub>i</sub>).</li>
+      <li><b>FRE</b> : la requête devient la moyenne des images pertinentes ; chaque composante reçoit le poids W<sub>i</sub> = 1 / (ε + σ<sub>rel,i</sub>) : elle compte d'autant plus qu'elle varie peu entre les images pertinentes.</li>
       <li><b>Re-weighting Type-1</b> (méthode du groupe) : la requête devient la moyenne des images pertinentes ; chaque composante reçoit le poids W<sub>i</sub> = (ε + σ<sub>Nr,i</sub>) / (ε + σ<sub>rel,i</sub>) : fort si elle varie peu entre les images pertinentes mais beaucoup parmi les images retournées.</li>
     </ol>
   </section>
   <section><h2>Résultats de l'application complète (GHIM-10K, 10 000 images)</h2>
-    <p>400 requêtes (20 par classe), 25 images affichées, utilisateur simulé sans erreur. Précision@25 : <b>50,4 %</b> en recherche simple, puis après 5 itérations <b>64,9 %</b> avec QVM, <b>69,6 %</b> avec FRE et <b>75,8 %</b> avec Re-weighting Type-1 (test de Wilcoxon : p &lt; 10<sup>-6</sup> face aux deux autres).</p>
-    <p class="muted" style="margin-top:6px">Cette page est une version simplifiée qui tourne entièrement dans le navigateur (descripteurs recalculés en JavaScript, un poids par descripteur). Les chiffres de l'onglet <i>Évaluation</i> sont recalculés en direct sur les images de la galerie et diffèrent donc de ceux de l'application complète.</p>
+    <p>400 requêtes (20 par classe), 25 images affichées, utilisateur simulé sans erreur. Précision@25 : <b>50,4 %</b> en recherche simple, puis après 5 itérations <b>64,9 %</b> avec QVM, <b>69,6 %</b> avec FRE et <b>71,6 %</b> avec Re-weighting Type-1 tel que défini dans l'article (équation 5). L'extension « Type-1 amélioré » du groupe atteint <b>75,8 %</b>.</p>
+    <p class="muted" style="margin-top:6px">Cette page est une version simplifiée qui tourne entièrement dans le navigateur (descripteurs recalculés en JavaScript, un poids par descripteur). Les trois méthodes y suivent les formules du tableau 1 de l'article. Les chiffres de l'onglet <i>Évaluation</i> sont recalculés en direct sur les images de la galerie et diffèrent donc de ceux de l'application complète.</p>
   </section>
   <section><h2>Installation de l'application complète</h2>
 <pre>git clone https://github.com/Minyurano/galerie-cbir.git
@@ -382,10 +382,14 @@ function extract(img){
   for(let y=1;y<SIZE-1;y++) for(let x=1;x<SIZE-1;x++){ const i=y*SIZE+x, c=G[i]; let code=0; for(let k=0;k<8;k++) if(G[i+off[k]]>=c) code|=1<<k; lbp[code]++; nl++; }
   return [f1,f2,f3,f4,lbp.map(x=>x/nl)];
 }
-function d1(i,a,b){ let s=0; if(HIST[i]){ for(let k=0;k<a.length;k++) s+=Math.abs(a[k]-b[k]); return s/2; } for(let k=0;k<a.length;k++) s+=(a[k]-b[k])**2; return Math.sqrt(s); }
+function d1(i,a,b,c){   // c : poids des composantes (retour de pertinence), facultatif
+  let s=0, n=a.length, sc=1;
+  if(c){ let t=0; for(let k=0;k<n;k++) t+=c[k]; sc=t>0?n/t:1; }
+  if(HIST[i]){ for(let k=0;k<n;k++) s+=(c?c[k]:1)*Math.abs(a[k]-b[k]); return s*sc/2; }
+  for(let k=0;k<n;k++) s+=(c?c[k]:1)*(a[k]-b[k])**2; return Math.sqrt(s*sc); }
 
 /* distances d'une requête (vecteurs qf) vers une liste d'images, normalisation gaussienne par descripteur */
-function rawDist(qf, list){ return list.map(im=>DESC.map((_,i)=>d1(i,qf[i],im.f[i]))); }
+function rawDist(qf, list, cw){ return list.map(im=>DESC.map((_,i)=>d1(i,qf[i],im.f[i],cw?cw[i]:null))); }
 function normalize(R){
   const n=R.length; if(!n) return R;
   const out=R.map(r=>r.slice());
@@ -401,34 +405,29 @@ const score=(d,w)=>d.reduce((a,x,i)=>a+w[i]*x,0);
    3. RETOUR DE PERTINENCE : QVM, FRE, Re-weighting Type-1
    ===================================================================== */
 const EQ=()=>DESC.map(()=>1/DESC.length);
-function rfQVM(qf, rel, non){            // Rocchio : α=1, β=0.75, γ=0.15
+function rfQVM(qf, rel, non){            // Rocchio : α=1, β=0.75, γ=0.25 (comme l'application)
   return qf.map((v,i)=>v.map((x,k)=>{
     const mr=rel.length?rel.reduce((a,im)=>a+im.f[i][k],0)/rel.length:0;
     const mn=non.length?non.reduce((a,im)=>a+im.f[i][k],0)/non.length:0;
-    let y=x+(rel.length?0.75*(mr-x):0)-(non.length?0.15*mn:0);
+    let y=x+(rel.length?0.75*(mr-x):0)-(non.length?0.25*mn:0);
     return HIST[i]?Math.max(0,y):y;
   }));
 }
-function rfFRE(qf, rel, w){               // W_i ∝ 1/σ_i parmi les images pertinentes (requête incluse)
-  if(!rel.length) return w;
+const EPS=1e-4;
+const sdOf=(set,i,k)=>{ let m=0; for(const f of set) m+=f[i][k]; m/=set.length; let v=0; for(const f of set) v+=(f[i][k]-m)**2; return Math.sqrt(v/set.length); };
+const meanOf=set=>set[0].map((v,i)=>v.map((_,k)=>set.reduce((a,f)=>a+f[i][k],0)/set.length));
+function rfFRE(qf, rel){                 // tableau 1 : requête = moyenne des pertinentes, w_i = 1/(ε+σ_rel,i)
   const set=[qf,...rel.map(im=>im.f)];
-  const nw=DESC.map((_,i)=>{ const dim=set[0][i].length; let sd=0;
-    for(let k=0;k<dim;k++){ let m=0; for(const f of set) m+=f[i][k]; m/=set.length; let v=0; for(const f of set) v+=(f[i][k]-m)**2; sd+=Math.sqrt(v/set.length); }
-    sd/=dim; const scale=set.reduce((a,f)=>a+f[i].reduce((s,x)=>s+Math.abs(x),0)/dim,0)/set.length||1;
-    return 1/(sd/scale+0.05); });
-  const s=nw.reduce((a,x)=>a+x,0); return nw.map(x=>x/s);
+  const cw=DESC.map((_,i)=>{ const raw=qf[i].map((_,k)=>1/(EPS+sdOf(set,i,k)));
+    const norm=a=>{ const m=a.reduce((x,y)=>x+y,0)/a.length||1; return a.map(x=>x/m); };
+    return norm(norm(raw).map(x=>Math.min(x,10))); });   // normalisés et plafonnés : stables avec peu d'exemples
+  return { f: meanOf(set), cw };
 }
-function rfType1(D, labels, K, w, qf){    // article : W_i = (ε+σ_Nr,i)/(ε+σ_rel,i) (éq. 5), importance des descripteurs (éq. 14)
-  const EPS=1e-4;
+function rfType1(D, labels, K, w, qf){    // article, éq. 5 : w_i = (ε+σ_Nr,i)/(ε+σ_rel,i), requête = moyenne des pertinentes
   const top=[...D].sort((a,b)=>score(a.d,w)-score(b.d,w)).slice(0,K).map(o=>o.im.f);   // N_r images retournées
   const rel=[qf,...D.filter(o=>labels[o.im.id]>0).map(o=>o.im.f)];                       // pertinentes (requête comprise)
-  const sd=(set,i,k)=>{ let m=0; for(const f of set) m+=f[i][k]; m/=set.length; let v=0; for(const f of set) v+=(f[i][k]-m)**2; return Math.sqrt(v/set.length); };
-  const W=DESC.map((_,i)=>{ const dim=qf[i].length; let s=0;
-    for(let k=0;k<dim;k++) s+=Math.min((EPS+sd(top,i,k))/(EPS+sd(rel,i,k)),1/EPS);
-    return Math.log1p(s/dim); });                                                          // log : atténue les écarts extrêmes
-  const S=W.reduce((a,x)=>a+x,0);
-  const f=qf.map((v,i)=>v.map((_,k)=>rel.reduce((a,g)=>a+g[i][k],0)/rel.length));        // requête = moyenne des pertinentes
-  return { w: S>0 ? W.map(x=>x/S) : w, f };
+  const cw=DESC.map((_,i)=>qf[i].map((_,k)=>(EPS+sdOf(top,i,k))/(EPS+sdOf(rel,i,k))));
+  return { f: meanOf(rel), cw };
 }
 
 /* =====================================================================
@@ -687,12 +686,12 @@ function openImage(id){
    ===================================================================== */
 let Q=null;   // {f0, f, id, cls, weights, labels, iter, hist, method, results}
 function setQuery(f,url,label,id,cls){
-  Q={f0:f,f:f.map(v=>v.slice()),id,cls,w:EQ(),labels:{},iter:0,hist:[]};
+  Q={f0:f,f:f.map(v=>v.slice()),cw:null,id,cls,w:EQ(),labels:{},iter:0,hist:[]};
   $("qImg").src=url; $("qInfo").textContent=label;
 }
 function candidates(){ const s=$("scope").value; let list=IMGS; if(s!=="all"){ const ids=new Set(descendants(s)); list=IMGS.filter(im=>ids.has(im.cat)); } return list.filter(im=>im.id!==Q.id); }
 const getK=()=>Math.max(1,Math.min(60,+$("kVal").value||12));
-function ranked(){ const list=candidates(); const N=normalize(rawDist(Q.f,list)); return list.map((im,i)=>({im,d:N[i]})).map(o=>({...o,s:score(o.d,Q.w)})).sort((a,b)=>a.s-b.s); }
+function ranked(){ const list=candidates(); const N=normalize(rawDist(Q.f,list,Q.cw)); return list.map((im,i)=>({im,d:N[i]})).map(o=>({...o,s:score(o.d,Q.w)})).sort((a,b)=>a.s-b.s); }
 function runSearch(){
   if(!Q) return toast("Choisissez d'abord une image requête.");
   const R=ranked(), K=getK(), top=R.slice(0,K);
@@ -702,7 +701,9 @@ function runSearch(){
     $("prec").innerHTML=`<b>Précision P@${top.length} : ${ok} / ${top.length}</b> images de la catégorie « ${esc(Q.cls)} » — `+Q.hist.map((p,i)=>p===undefined?"":`${i?"itération "+i:"recherche simple"} : <b>${p} %</b>`).filter(Boolean).join(" → ");
   } else $("prec").classList.add("hidden");
   $("iterLbl").textContent=Q.iter?`(itération ${Q.iter} – ${$("method").selectedOptions[0].text})`:"(poids initiaux)";
-  $("wbars").innerHTML=DESC.map((n,i)=>`<div class="w"><span>${n}</span><div class="bar"><i style="width:${(Q.w[i]*100).toFixed(1)}%"></i></div><span>${(Q.w[i]*100).toFixed(0)} %</span></div>`).join("");
+  // poids affichés : poids des descripteurs, ou poids moyen de leurs composantes (FRE, Type-1), ramenés à 100 %
+  let W=Q.w; if(Q.cw){ const m=Q.cw.map(c=>c.reduce((a,x)=>a+x,0)/c.length), t=m.reduce((a,x)=>a+x,0)||1; W=m.map(x=>x/t); }
+  $("wbars").innerHTML=DESC.map((n,i)=>`<div class="w"><span>${n}</span><div class="bar"><i style="width:${(W[i]*100).toFixed(1)}%"></i></div><span>${(W[i]*100).toFixed(0)} %</span></div>`).join("");
   $("res").innerHTML=top.length?"":`<div class="empty">Aucune image candidate dans cette portée.</div>`;
   top.forEach((o,k)=>{ const lab=Q.labels[o.im.id]||0, d=document.createElement("div");
     d.className="r"+(lab>0?" pos":lab<0?" neg":"");
@@ -720,8 +721,8 @@ function feedback(){
   if(!Object.values(Q.labels).some(v=>v)) return toast("Marquez au moins une image ✓ ou ✗.");
   const all=candidates(), rel=all.filter(im=>Q.labels[im.id]>0), non=all.filter(im=>Q.labels[im.id]<0), m=$("method").value;
   if(m==="qvm") Q.f=rfQVM(Q.f,rel,non);
-  else if(m==="fre") Q.w=rfFRE(Q.f0,rel,Q.w);
-  else { const N=normalize(rawDist(Q.f,all)); const r=rfType1(all.map((im,i)=>({im,d:N[i]})),Q.labels,getK(),Q.w,Q.f0); Q.w=r.w; Q.f=r.f; }
+  else if(m==="fre"){ if(rel.length){ const r=rfFRE(Q.f0,rel); Q.f=r.f; Q.cw=r.cw; } }
+  else { const N=normalize(rawDist(Q.f,all,Q.cw)); const r=rfType1(all.map((im,i)=>({im,d:N[i]})),Q.labels,getK(),Q.w,Q.f0); Q.f=r.f; Q.cw=r.cw; }
   Q.iter++; runSearch(); toast(`Itération ${Q.iter} effectuée (${$("method").selectedOptions[0].text}).`);
 }
 $("doSearch").onclick=()=>{ if(!Q) return toast("Choisissez d'abord une image requête."); setQuery(Q.f0,$("qImg").src,$("qInfo").textContent,Q.id,Q.cls); runSearch(); };
@@ -750,14 +751,14 @@ $("eRun").onclick=async()=>{
     const q=queries[qi], cls=clsOf(q), all=pool.filter(im=>im.id!==q.id);
     const user=im=>{ let v=clsOf(im)===cls?1:-1; if(Math.random()<noise) v=-v; return v; };
     for(const m of methods){
-      let f=q.f.map(v=>v.slice()), w=EQ(), labels={};
+      let f=q.f.map(v=>v.slice()), w=EQ(), cw=null, labels={};
       for(let it=0;it<=IT;it++){
-        const N=normalize(rawDist(f,all)), D=all.map((im,i)=>({im,d:N[i],s:score(N[i],w)})).sort((a,b)=>a.s-b.s), top=D.slice(0,K);
+        const N=normalize(rawDist(f,all,cw)), D=all.map((im,i)=>({im,d:N[i],s:score(N[i],w)})).sort((a,b)=>a.s-b.s), top=D.slice(0,K);
         sum[m][it]+=top.filter(o=>clsOf(o.im)===cls).length/K;
         if(it===IT) break;
         top.forEach(o=>{ if(labels[o.im.id]===undefined) labels[o.im.id]=user(o.im); });
         const rel=all.filter(im=>labels[im.id]>0), non=all.filter(im=>labels[im.id]<0);
-        if(m==="qvm") f=rfQVM(f,rel,non); else if(m==="fre") w=rfFRE(q.f,rel,w); else { const r=rfType1(D,labels,K,w,q.f); w=r.w; f=r.f; }
+        if(m==="qvm") f=rfQVM(f,rel,non); else if(m==="fre"){ if(rel.length){ const r=rfFRE(q.f,rel); f=r.f; cw=r.cw; } } else { const r=rfType1(D,labels,K,w,q.f); f=r.f; cw=r.cw; }
       }
     }
     if(qi%3===0){ $("eStatus").textContent=`Évaluation… ${qi+1}/${queries.length} requêtes`; await sleep(); }

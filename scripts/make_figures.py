@@ -19,9 +19,9 @@ import config  # noqa: E402
 
 # Palette catégorielle validée (ordre fixe) ; la recherche simple est une
 # référence neutre (gris, pointillés), pas une série.
-COL = {"qvm": "#2a78d6", "fre": "#eb6834", "type1": "#1baf7a", "simple": "#7a7a75"}
-MARK = {"qvm": "o", "fre": "s", "type1": "^"}
-NAME = {"qvm": "QVM", "fre": "FRE", "type1": "Re-weighting Type-1", "simple": "Recherche simple"}
+COL = {"qvm": "#2a78d6", "fre": "#eb6834", "type1": "#1baf7a", "type1plus": "#8a5cd1", "simple": "#7a7a75"}
+MARK = {"qvm": "o", "fre": "s", "type1": "^", "type1plus": "D"}
+NAME = {"qvm": "QVM", "fre": "FRE", "type1": "Re-weighting Type-1", "type1plus": "Type-1 amélioré", "simple": "Recherche simple"}
 INK, MUTED, GRID = "#1d2433", "#5f6676", "#e6e8ee"
 
 plt.rcParams.update({
@@ -35,11 +35,20 @@ def _lines(ax, R, noise, key, ylabel):
     it = list(range(R["iterations"] + 1))
     base = R["runs"]["simple@0.0"][key][0] * 100
     ax.axhline(base, color=COL["simple"], ls="--", lw=1.2, label=NAME["simple"])
-    for m in ("qvm", "fre", "type1"):
+    ends = []
+    for m in ("qvm", "fre", "type1", "type1plus"):
         y = [v * 100 for v in R["runs"][f"{m}@{noise:.1f}"][key]]
         ax.plot(it, y, color=COL[m], marker=MARK[m], ms=5, lw=2, label=NAME[m])
-        ax.annotate(f"{y[-1]:.1f}", (it[-1], y[-1]), xytext=(4, 0), textcoords="offset points",
-                    va="center", fontsize=8, color=INK)
+        ends.append([y[-1], y[-1], COL[m]])
+    # Étiquettes de fin de courbe : écartées verticalement quand deux valeurs sont proches
+    lo, hi = ax.get_ylim()
+    gap = (hi - lo) * 0.06
+    ends.sort(key=lambda e: e[0])
+    for k in range(1, len(ends)):
+        ends[k][1] = max(ends[k][1], ends[k - 1][1] + gap)
+    for v, pos, col in ends:
+        ax.annotate(f"{v:.1f}", (it[-1], v), xytext=(it[-1] + 0.12, pos), textcoords="data",
+                    va="center", fontsize=8, color=col, fontweight="bold")
     ax.set_xticks(it, ["Simple"] + [f"It. {i}" for i in it[1:]])
     ax.set_ylabel(ylabel)
     ax.set_xlim(-0.2, it[-1] + 0.6)
@@ -75,7 +84,7 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(7.2, 2.8))
     for ax, key, lab in ((axes[0], "P25", "Précision@25 (%) — itération 5"), (axes[1], "mAP", "mAP (%) — itération 5")):
         ax.axhline(R["runs"]["simple@0.0"][key][0] * 100, color=COL["simple"], ls="--", lw=1.2, label=NAME["simple"])
-        for m in ("qvm", "fre", "type1"):
+        for m in ("qvm", "fre", "type1", "type1plus"):
             ax.plot([n * 100 for n in noises], [R["runs"][f"{m}@{n:.1f}"][key][-1] * 100 for n in noises],
                     color=COL[m], marker=MARK[m], ms=5, lw=2, label=NAME[m])
         ax.set_xlabel("Erreurs de jugement de l'utilisateur (%)")

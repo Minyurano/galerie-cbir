@@ -49,8 +49,14 @@
             <span style="width:130px">{{ gl[g] }}</span>
             <div class="progress flex-grow-1" style="height:8px"><div class="progress-bar {% if loop.index <= 3 %}bg-warning{% else %}bg-info{% endif %}" style="width: {{ v * 100 }}%"></div></div>
             <span style="width:38px" class="text-end">{{ '%.0f'|format(v * 100) }} %</span>
+            {% if res.iteration > 0 and res.weights.components_max %}
+            <span style="width:120px" class="text-muted text-end" title="Poids w_i des composantes de ce descripteur (moyen / maximal)">w̄ {{ '%.2f'|format(res.weights.components_mean[g]) }} · max {{ '%.1f'|format(res.weights.components_max[g]) }}</span>
+            {% endif %}
           </div>
           {% endfor %}
+          {% if res.iteration > 0 and res.method in ('type1', 'fre') %}
+          <div class="tiny text-muted mt-1">Les poids w<sub>i</sub> de chaque composante (équation {{ '5' if res.method == 'type1' else '4' }} de l'article) agissent à l'intérieur de chaque descripteur.</div>
+          {% endif %}
         </div>
         <div class="col-md-6">
           {% if state.history|length > 1 and state.history[0].precision is not none %}

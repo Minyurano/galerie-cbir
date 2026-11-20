@@ -23,7 +23,8 @@ bp = Blueprint("search", __name__, url_prefix="/search")
 METHOD_LABELS = {
     "qvm": "Query Vector Modification (QVM)",
     "fre": "Feature Relevance Estimation (FRE)",
-    "type1": "Re-weighting Type-1",
+    "type1": "Re-weighting Type-1 (méthode du groupe G11)",
+    "type1plus": "Re-weighting Type-1 amélioré (extension)",
 }
 QUERY_DIR = config.DATA_DIR / "queries"
 

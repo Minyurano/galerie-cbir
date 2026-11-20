@@ -56,9 +56,10 @@ SCOPE = int(os.environ.get("CBIR_SCOPE", 25))
 
 # Méthode de retour de pertinence du groupe :
 #   "qvm"   -> Query Vector Modification   (G3, G7, G9, G12, G15)
-#   "fre"   -> Feature Relevance Estimation (G1, G5, G10, G13, G14)
+#   "fre"   -> Feature Relevance Estimation (G1, G5, G10, G13, G14, G16)
 #   "type1" -> Re-weighting Type-1          (G2, G4, G6, G8, G11)
-# Méthode du groupe G11 : Re-weighting Type-1.
+#   "type1plus" -> Type-1 amélioré (extension du groupe G11, hors article)
+# Méthode du groupe G11 : Re-weighting Type-1, exactement comme dans l'article.
 DEFAULT_RF_METHOD = os.environ.get("CBIR_RF_METHOD", "type1")
 
 # Paramètres de la formule de Rocchio (QVM).
